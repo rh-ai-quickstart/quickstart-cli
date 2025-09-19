@@ -1,0 +1,62 @@
+---
+description: CLI development standards for boilerplate generator
+globs: ["src/**/*.ts", "*.ts"]
+alwaysApply: false
+---
+
+# CLI Development Standards
+
+## PROJECT CONTEXT
+This is a CLI tool for generating project boilerplates with TypeScript, Python (FastAPI), and React/Next.js templates.
+
+## CLI-SPECIFIC CONVENTIONS
+- Use **Ink (React for CLIs)** for rich interactive terminal UIs with real-time progress
+- Implement proper exit codes: 0 for success, 1 for user errors, 2 for system errors
+- Use **React components** for UI organization and state management
+- Use **zod** schemas for input validation and type safety
+- Use **Ink hooks** (useInput, useApp, useState, useEffect) for interactivity
+- Create **reusable UI components** for forms, progress, errors, and success states
+- Support both interactive and non-interactive modes through props
+- Include **CLI flags for automation** (--api-only, --ui-only, --all-features, --skip-prompts)
+- Provide **clear, actionable error messages** with suggestions for resolution
+- Include **progress indicators** for long-running operations (template generation, file copying)
+
+## FILE ORGANIZATION FOR CLI
+- **React components** in src/components/ (App, Forms, Progress, Error, Success)
+- **Main entry point** in src/ink-cli.tsx with argument parsing
+- **Command implementations** in src/commands/ (create, add-package, remove-package)
+- **Modular generators** in src/generators/packages/ organized by package type:
+  - src/generators/packages/ui/ (React frontend generator)
+  - src/generators/packages/api/ (Python FastAPI generator)  
+  - src/generators/packages/db/ (Database generator)
+- **TypeScript template functions** in each generator's templates/ subdirectory
+- **Main project orchestrator** in src/generators/index.ts
+- **Type definitions** in src/types/ (features.ts, CLI-specific types)
+- **Test utilities** in src/__tests__/utils/ (temp dirs, file validation, Python syntax checking)
+
+## INK UI PATTERNS
+- Use **component composition** for complex UI flows (setup → generation → success)
+- Use **useInput** hook for keyboard navigation and shortcuts
+- Use **useState** for form data and UI state management
+- Use **useEffect** for lifecycle events and auto-progression
+- Use **callback props** for parent-child component communication
+- Use **Ink built-in components** (Box, Text, Spacer) for layout
+- Use **third-party Ink components** (TextInput, SelectInput, Spinner, ProgressBar)
+
+## GENERATOR ARCHITECTURE
+- Use **modular package generators** with consistent interfaces (generate(): Promise<void>)
+- Use **async generators** (AsyncGenerator<GenerationStep>) for real-time progress reporting
+- Use **fs.outputFile** for atomic file creation with automatic directory creation
+- Implement **TypeScript template functions** returning string literals for type safety
+- Use **structured error objects** with actionable suggestions and exit codes
+- Support **conditional template logic** based on feature flags (config.features.*)
+- Validate generated code with **real toolchains** (python3 -m py_compile, tsc --noEmit)
+- Use **fs-extra** for robust file operations and **path** for cross-platform paths
+
+## PACKAGE MANAGEMENT
+- Use **pnpm** for workspace management and faster installs
+- Use **uv** for Python package management in generated projects
+- Use **turbo** for monorepo task orchestration and caching
+- Keep CLI dependencies minimal - prefer native Node.js APIs where possible
+- Generate lock files for template projects (pnpm-lock.yaml, uv.lock)
+- Include dev dependencies that match project standards (ruff, mypy, eslint, prettier)

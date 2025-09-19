@@ -1,0 +1,70 @@
+---
+description: Testing standards and best practices for CLI tools
+globs: ["**/*.test.ts", "**/*.spec.ts", "**/tests/**/*", "**/test/**/*"]
+alwaysApply: false
+---
+
+# Testing Standards
+
+## TESTING STRATEGY
+- **Three-layer testing pyramid**: Unit (template functions) → Integration (generators) → E2E (CLI + real tools)
+- **Unit Tests (⚡ 30s)**: Test individual TypeScript template functions for correct output
+- **Integration Tests (🐌 2-5min)**: Test generators with temp directories and file creation
+- **E2E Tests (🐢 10min)**: Execute CLI, install deps, run generated project's native tools
+- **Real tool validation**: Use actual Python (pytest, mypy, ruff) and Node.js (ESLint, TypeScript) tools
+- **CLI Testing**: Use **Vitest** + **ink-testing-library** for UI component testing
+- **Coverage**: Use **@vitest/coverage-v8** with integration into CI/CD pipeline
+- **Deterministic tests**: Use temp directories, unique ports, proper cleanup
+
+## STACK-SPECIFIC TESTING
+### CLI Testing
+- **Unit Tests**: Test individual template functions (generateMainPy, generatePackageJson, etc.)
+- **Integration Tests**: Test package generators with real temp directories and fs.outputFile
+- **E2E Tests**: Execute actual CLI binary, install dependencies, run real Python/Node tools
+- **UI Component Tests**: Use **ink-testing-library** to test React CLI components
+- **Argument Parsing**: Test zod schemas and CLI flags (--api-only, --ui-only, --all-features)
+- **Real Tool Validation**: Run `python3 -m py_compile`, `pytest`, `ruff`, `mypy`, `vite build`, `pnpm lint`
+- **Server Testing**: Start generated FastAPI/Vite servers and test health endpoints
+
+### Frontend Testing (Vitest)
+- Test **TanStack Router** route components and navigation
+- Test **TanStack Query** hooks with mock data and error states
+- Test **Radix UI** component integrations and accessibility
+- Use **@storybook/test** for interaction testing in Storybook
+- Mock API calls using Vitest's mock functions
+
+### Backend Testing (pytest)
+- Test **FastAPI** endpoints with **httpx** async client
+- Test **Pydantic** models and validation edge cases
+- Test **SQLAlchemy** async queries and transactions
+- Use **pytest-asyncio** for all async database operations
+- Mock external services and use fixtures for database setup
+
+## TEST ORGANIZATION
+- Co-locate tests with the code they test
+- Use descriptive test names that explain the scenario
+- Group related tests with `describe` blocks
+- Use `beforeEach`/`afterEach` for setup/cleanup
+- Mock external dependencies consistently
+
+## ASSERTIONS AND BEST PRACTICES
+### Vitest (CLI + Frontend)
+- **Template Tests**: `expect(generateMainPy(config)).toContain('from fastapi import FastAPI')`
+- **File System Tests**: Use `createTempDir()` and `assertFileExists()` test helpers
+- **Component Tests**: Use `render()` from ink-testing-library and `lastFrame()` assertions
+- **Mock File Operations**: Use `vi.mock('fs-extra')` for unit tests, real fs for integration
+- **Python Validation**: Use `validatePythonSyntax()` helper with `python3 -m py_compile`
+- **Process Testing**: Use `execSync()` for CLI execution and tool validation in E2E tests
+
+### pytest (Backend)
+- Use `pytest.mark.asyncio` for all async test functions
+- Use `pytest.mark.parametrize` for testing multiple scenarios
+- Use `httpx.AsyncClient` for testing FastAPI endpoints
+- Test **Pydantic** validation errors with specific error messages
+- Use database fixtures and cleanup for integration tests
+
+### General
+- Test error conditions and edge cases for both stacks
+- Include performance tests for file operations and database queries
+- Test with realistic data sizes and complexity
+- Use proper test markers: `@pytest.mark.slow`, `describe.skip()` in Vitest

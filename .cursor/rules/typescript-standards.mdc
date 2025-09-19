@@ -1,0 +1,45 @@
+---
+description: TypeScript coding standards and best practices
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+## STRICT TYPING
+- Enable strict mode: "strict": true, including noImplicitAny, strictNullChecks, exactOptionalPropertyTypes
+- Explicit return types for exported functions and public APIs
+- Use discriminated unions and branded types to prevent invalid states
+- No `any` - prefer `unknown` and proper type narrowing
+- Smart enum usage - prefer union literals, but use enums when they provide clear value
+
+## CODE STYLE
+- Use `readonly` where applicable and prefer immutable data structures
+- Generate API types from schemas (OpenAPI/GraphQL/Zod) to ensure type parity
+- Prefer composition over inheritance
+- Use dependency injection for swappable components
+- Early returns over deep nesting; guard clauses for invalid inputs
+
+## NAMING CONVENTIONS
+- camelCase for variables and functions
+- PascalCase for types, interfaces, and classes
+- SCREAMING_SNAKE_CASE for constants
+- Descriptive names; avoid abbreviations and misleading terms
+- No magic numbers/strings; centralize constants
+
+## FRONTEND-SPECIFIC STANDARDS
+- Use **zod** for all data validation and API response schemas
+- Use **TanStack Router** file-based routing with proper type safety
+- Use **TanStack React Query** for server state with proper error handling
+- Use **Radix UI** primitives over custom implementations
+- Use **class-variance-authority** for component variant patterns
+- Use **tailwind-merge** for conditional className merging
+- Use **lucide-react** for consistent iconography
+
+## ERROR HANDLING
+- Use **zod** for runtime validation with proper error messages
+- Implement error boundaries for React components
+- Use TanStack Router's error handling for route-level errors
+- Use TanStack Query's error handling with retry strategies
+- Validate data at boundaries (API responses, forms, environment) with zod schemas
+- Use proper TypeScript error types (never use `any` for errors)

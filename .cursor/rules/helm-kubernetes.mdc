@@ -1,0 +1,90 @@
+---
+description: Helm charts and Kubernetes deployment best practices
+globs: ["**/helm/**/*", "**/*.yaml", "**/*.yml", "**/Chart.yaml", "**/values.yaml"]
+alwaysApply: false
+---
+
+# Helm & Kubernetes Standards
+
+## HELM CHART STRUCTURE
+- Use **semantic versioning** for chart versions
+- Use **app version** to track application releases separately from chart versions
+- Organize **templates** with clear naming: `deployment.yaml`, `service.yaml`, `ingress.yaml`
+- Use **_helpers.tpl** for reusable template functions and labels
+- Use **NOTES.txt** to provide post-installation instructions
+- Include **proper dependencies** in Chart.yaml with version constraints
+- Use **keywords** and **maintainers** for chart metadata
+
+## VALUES.YAML PATTERNS
+- Use **hierarchical structure** for logical grouping (app.name, database.enabled)
+- Provide **sensible defaults** for all configurable values
+- Use **consistent naming** across all charts (camelCase recommended)
+- Document **all values** with inline comments
+- Use **resource requests and limits** for all containers
+- Include **environment-specific** value files (values-dev.yaml, values-prod.yaml)
+- Use **conditional blocks** for optional features
+
+## TEMPLATE BEST PRACTICES
+- Use **proper indentation** (2 spaces) for YAML consistency
+- Use **{{ include }}** instead of {{ template }} for better error messages
+- Use **toYaml** for multi-line value rendering
+- Use **quote** function for string values that might contain special characters
+- Use **if/else** blocks for conditional resource creation
+- Validate **required values** with {{ required "message" .Values.path }}
+- Use **checksum annotations** for config map updates
+
+## KUBERNETES RESOURCES
+### Deployments
+- Use **rolling update strategy** with proper readiness/liveness probes
+- Set **resource requests and limits** for CPU and memory
+- Use **environment variables** from ConfigMaps and Secrets
+- Use **security contexts** with non-root users and read-only filesystems
+- Use **pod disruption budgets** for high availability
+- Use **affinity rules** for proper pod distribution
+
+### Services
+- Use **ClusterIP** for internal services, **LoadBalancer** or **NodePort** for external
+- Use **proper port naming** and protocols
+- Use **session affinity** when needed for stateful applications
+- Include **health check endpoints** in service definitions
+
+### ConfigMaps & Secrets
+- Separate **configuration** (ConfigMaps) from **sensitive data** (Secrets)
+- Use **stringData** in Secrets for better readability
+- Mount secrets as **files** rather than environment variables when possible
+- Use **immutable** ConfigMaps and Secrets for better performance
+
+## POSTGRESQL DEPENDENCY
+- Use **Bitnami PostgreSQL chart** as a dependency
+- Configure **persistent storage** with appropriate storage class
+- Set **proper resource limits** for PostgreSQL
+- Use **connection pooling** configuration
+- Configure **backup strategies** for production environments
+- Use **database initialization scripts** for schema setup
+- Configure **proper authentication** and network policies
+
+## SECURITY
+- Use **non-root containers** with explicit user IDs
+- Use **read-only root filesystems** where possible
+- Use **network policies** to restrict pod-to-pod communication
+- Use **RBAC** with minimal required permissions
+- Use **pod security standards** (restricted profile recommended)
+- Use **image pull policies** (Always for :latest, IfNotPresent for tagged images)
+- Use **secrets management** for sensitive configuration
+
+## MONITORING & OBSERVABILITY
+- Include **Prometheus metrics** endpoints in service definitions
+- Use **proper labels** for service discovery and monitoring
+- Include **health check endpoints** (readiness, liveness)
+- Use **structured logging** configuration
+- Include **tracing configuration** for distributed systems
+- Use **resource monitoring** for capacity planning
+
+## DEVELOPMENT WORKFLOW
+- Use **helm template** for dry-run testing
+- Use **helm lint** for chart validation
+- Use **helm test** for deployment validation
+- Use **helm diff** plugin for upgrade previews
+- Use **separate namespaces** for different environments
+- Use **GitOps workflows** for production deployments
+- Document **upgrade procedures** and rollback strategies

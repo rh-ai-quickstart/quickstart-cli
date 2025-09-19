@@ -1,0 +1,67 @@
+---
+description: FastAPI, Pydantic, and SQLAlchemy best practices
+globs: ["**/*.py", "**/pyproject.toml", "**/alembic/**/*"]
+alwaysApply: false
+---
+
+# Python FastAPI & SQLAlchemy Standards
+
+## FASTAPI BEST PRACTICES
+- Use **dependency injection** for database sessions, authentication, and configuration
+- Define response models with **Pydantic v2** for all endpoints
+- Use **async/await** for all database operations and I/O
+- Implement proper **status codes** and **HTTPException** for errors
+- Use **FastAPI tags** to organize endpoints in OpenAPI docs
+- Leverage **FastAPI's automatic validation** with Pydantic models
+- Use **BackgroundTasks** for non-critical operations
+
+## PYDANTIC V2 PATTERNS
+- Use **BaseModel** for request/response schemas
+- Use **BaseSettings** for configuration management
+- Use **Field()** for validation constraints and documentation
+- Use **model_validator** for complex validation logic
+- Use **computed_field** for derived properties
+- Prefer **Annotated** types with validation constraints
+- Use **ConfigDict** for model configuration
+
+## SQLALCHEMY 2.0 ASYNC
+- Use **async session** patterns with proper context management
+- Use **select()** for queries, avoid legacy query API
+- Use **relationship()** with proper lazy loading strategies
+- Use **asyncpg** driver for PostgreSQL connections
+- Implement proper **connection pooling** and **session management**
+- Use **declarative base** with modern typing patterns
+- Use **hybrid_property** for computed database fields
+
+## ALEMBIC MIGRATIONS
+- Write **reversible migrations** with both upgrade and downgrade
+- Use **batch operations** for schema changes on large tables
+- **Test migrations** on production-like data volumes
+- Use **alembic.op** operations for complex schema changes
+- Version migrations with **descriptive names** and timestamps
+- Use **depends_on** for migration dependencies
+
+## ERROR HANDLING
+- Use **HTTPException** with proper status codes and detail messages
+- Implement **global exception handlers** for common error types
+- Log errors with **structured logging** (JSON format)
+- Use **Pydantic validation errors** for client input validation
+- Implement **graceful degradation** for external service failures
+- Use **asyncio timeouts** for external API calls
+
+## SECURITY
+- Use **python-jose** for JWT token handling
+- Use **passlib** with **bcrypt** for password hashing
+- Implement **proper CORS** configuration
+- Use **dependency injection** for authentication checks
+- Validate **all inputs** with Pydantic models
+- Use **environment variables** for secrets (never hardcode)
+- Implement **rate limiting** for public endpoints
+
+## PYTHON TOOLING
+- Use **uv** for package management and virtual environments
+- Use **ruff** for linting and formatting (replaces black + isort + flake8)
+- Use **mypy** with strict mode for type checking
+- Use **pytest** with **pytest-asyncio** for testing
+- Use **pytest-cov** for coverage reporting
+- Use **pre-commit** hooks for code quality gates

@@ -1,0 +1,338 @@
+---
+description: AI Kickstart CLI comprehensive architecture and development guidelines
+globs: ["src/**/*.ts", "src/**/*.tsx", "**/*.test.ts", "docs/**/*.md"]
+alwaysApply: true
+---
+
+# AI Kickstart CLI - Complete Architecture Guide
+
+## PROJECT OVERVIEW
+This is a sophisticated CLI tool for generating production-ready, AI-powered full-stack applications. It uses a modular TypeScript-based template system with comprehensive testing and real tool validation.
+
+## CORE ARCHITECTURE PRINCIPLES
+
+### 1. Type-Safe Template System
+- **TypeScript template functions** instead of external template files
+- **ProjectConfig interface** for consistent, type-safe parameters across all templates  
+- **Conditional logic** using native TypeScript/JavaScript (no mustache/handlebars)
+- **IDE support** with autocomplete, refactoring, and inline documentation
+
+### 2. Modular Generator Architecture
+```
+src/generators/
+├── index.ts                    # Main project orchestrator
+└── packages/                   # Package-specific generators
+    ├── ui/                     # React frontend generator
+    │   ├── generator.ts        # UIPackageGenerator class
+    │   └── templates/          # TypeScript template functions
+    ├── api/                    # Python FastAPI generator  
+    │   ├── generator.ts        # APIPackageGenerator class
+    │   └── templates/          # TypeScript template functions
+    └── db/                     # Database generator
+        ├── generator.ts        # DBPackageGenerator class
+        └── templates/          # TypeScript template functions
+```
+
+### 3. Three-Layer Testing Strategy
+- **Unit Tests (⚡ 30s)**: Individual template functions
+- **Integration Tests (🐌 2-5min)**: Complete generators with temp directories
+- **E2E Tests (🐢 10min)**: Full CLI execution + real Python/Node.js tools
+
+## GENERATOR INTERFACE STANDARDS
+
+### Package Generator Contract
+```typescript
+interface PackageGenerator {
+  generate(): Promise<void>;
+}
+
+// Example implementation
+export class APIPackageGenerator {
+  constructor(
+    private config: ProjectConfig,
+    private outputDir: string
+  ) {}
+
+  async generate(): Promise<void> {
+    const apiDir = path.join(this.outputDir, 'packages', 'api');
+    
+    // Use fs.outputFile for atomic file creation
+    await fs.outputFile(
+      path.join(apiDir, 'src', 'main.py'),
+      generateMainPy(this.config)
+    );
+  }
+}
+```
+
+### Template Function Standards
+```typescript
+// ✅ Good: Type-safe, conditional logic, proper formatting
+export function generateFastAPIMain(config: ProjectConfig): string {
+  const { name, description, features } = config;
+  
+  return `
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+${features.db ? 'from .database import init_db' : ''}
+
+app = FastAPI(
+    title="${name} API",
+    description="${description}",
+    version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+${features.db ? `
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
+` : ''}
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to ${name}"}
+
+@app.get("/health/")
+async def health():
+    return {"status": "healthy"}
+`.trim();
+}
+
+// ❌ Bad: No types, no validation, external dependencies
+function generateStuff(data: any): string {
+  return template.render(data); // External template engine
+}
+```
+
+## CLI COMPONENT ARCHITECTURE (Ink React)
+
+### Component Hierarchy
+```
+App (Main orchestrator)
+├── ProjectSetupForm (Interactive configuration)
+├── ProjectGenerationSimple (Progress display)  
+├── SuccessMessage (Completion)
+└── ErrorMessage (Error handling)
+```
+
+### State Management Pattern
+```typescript
+type AppState = 'welcome' | 'setup' | 'generating' | 'success' | 'error';
+
+interface AppData {
+  config?: ProjectConfig;
+  error?: string;
+  outputPath?: string;
+}
+
+// Use React state for UI flow control
+const [state, setState] = useState<AppState>('welcome');
+const [data, setData] = useState<AppData>({});
+```
+
+### CLI Arguments & Automation
+```typescript
+// Support both interactive and automated modes
+const CreateArgsSchema = z.object({
+  name: z.string().optional(),
+  skipPrompts: z.boolean().default(false),
+  outputDir: z.string().default(process.cwd()),
+  // Feature flags for testing and automation
+  apiOnly: z.boolean().default(false),
+  uiOnly: z.boolean().default(false),
+  dbOnly: z.boolean().default(false),
+  allFeatures: z.boolean().default(false),
+});
+
+// Auto-skip prompts when feature flags are used
+if (args.apiOnly || args.uiOnly || args.dbOnly || args.allFeatures) {
+  args.skipPrompts = true;
+}
+```
+
+## TESTING ARCHITECTURE
+
+### Test File Organization
+```
+src/__tests__/
+├── unit/                       # Template function tests
+│   ├── api-templates.test.ts   # Test generateMainPy, generateConfig, etc.
+│   ├── ui-templates.test.ts    # Test React template functions
+│   └── db-templates.test.ts    # Test database template functions
+├── integration/                # Generator tests with real file system
+│   ├── api-generator.test.ts   # Test APIPackageGenerator
+│   ├── ui-generator.test.ts    # Test UIPackageGenerator
+│   └── full-project.test.ts    # Test complete project generation
+├── e2e/                        # End-to-end CLI tests
+│   └── cli-end-to-end.test.ts  # Execute CLI, install deps, run real tools
+├── utils/                      # Test utilities
+│   └── test-helpers.ts         # createTempDir, validatePythonSyntax, etc.
+└── setup.ts                    # Vitest global setup
+```
+
+### Test Utilities (Required)
+```typescript
+// src/__tests__/utils/test-helpers.ts
+export async function createTempDir(prefix?: string): Promise<string>
+export async function cleanupTempDir(tempDir: string): Promise<void>
+export async function assertFileExists(filePath: string): Promise<void>
+export async function assertFileContains(filePath: string, content: string[]): Promise<void>
+export async function validatePythonSyntax(filePath: string): Promise<boolean>
+export async function validateProjectStructure(projectDir: string, config: ProjectConfig): Promise<void>
+
+// Usage in tests
+describe('APIPackageGenerator', () => {
+  let tempDir: string;
+  
+  beforeEach(async () => {
+    tempDir = await createTempDir();
+  });
+  
+  afterEach(async () => {
+    await cleanupTempDir(tempDir);
+  });
+  
+  it('should generate valid Python files', async () => {
+    await generator.generate();
+    await assertFileExists(path.join(tempDir, 'packages', 'api', 'src', 'main.py'));
+    await validatePythonSyntax(path.join(tempDir, 'packages', 'api', 'src', 'main.py'));
+  });
+});
+```
+
+### Real Tool Validation
+```typescript
+// E2E tests must use actual tools
+describe('Generated Python API', () => {
+  it('should pass all Python quality checks', async () => {
+    // Generate project
+    execSync(`node cli.js create test-api --api-only`);
+    
+    const apiDir = path.join(tempDir, 'test-api', 'packages', 'api');
+    
+    // Install dependencies
+    execSync('python3 -m pip install -e .[dev]', { cwd: apiDir });
+    
+    // Run actual Python tools
+    execSync('python3 -m ruff check src/', { cwd: apiDir });
+    execSync('python3 -m mypy src/', { cwd: apiDir });
+    
+    const testResult = execSync('python3 -m pytest tests/ -v', {
+      cwd: apiDir,
+      encoding: 'utf-8'
+    });
+    
+    expect(testResult).toContain('passed');
+    expect(testResult).not.toContain('FAILED');
+  });
+});
+```
+
+## FILE OPERATION STANDARDS
+
+### Required Patterns
+```typescript
+// ✅ Use fs.outputFile for atomic file creation with directory creation
+await fs.outputFile(filePath, content);
+
+// ✅ Use path.join for cross-platform paths
+const filePath = path.join(packageDir, 'src', 'main.py');
+
+// ✅ Use proper error handling
+try {
+  await fs.outputFile(filePath, content);
+} catch (error) {
+  throw new Error(`Failed to write ${filePath}: ${error.message}`);
+}
+
+// ❌ Don't use fs.writeFile (doesn't create directories)
+await fs.writeFile(filePath, content); // May fail
+
+// ❌ Don't concatenate paths with strings
+const filePath = packageDir + '/src/main.py'; // Cross-platform issues
+```
+
+## PROJECT GENERATION FLOW
+
+### Async Generator Pattern
+```typescript
+export class ProjectGenerator {
+  async* generateProject(): AsyncGenerator<GenerationStep> {
+    // Foundation
+    yield { step: 'foundation', message: 'Creating project structure...' };
+    await this.generateFoundation();
+    
+    // Conditional package generation
+    if (this.config.features.ui) {
+      yield { step: 'ui', message: 'Setting up React frontend...' };
+      await new UIPackageGenerator(this.config, this.outputDir).generate();
+    }
+    
+    if (this.config.features.api) {
+      yield { step: 'api', message: 'Setting up Python API...' };
+      await new APIPackageGenerator(this.config, this.outputDir).generate();
+    }
+    
+    if (this.config.features.db) {
+      yield { step: 'db', message: 'Setting up database...' };
+      await new DBPackageGenerator(this.config, this.outputDir).generate();
+    }
+    
+    // Finalization
+    yield { step: 'finalize', message: 'Finalizing project...' };
+    await this.initializeGit();
+  }
+}
+```
+
+## PACKAGE SPECIFICATIONS
+
+### Python API Package
+- **FastAPI** + **Pydantic v2** + **SQLAlchemy 2.0** (async)
+- **uv** for dependency management, **ruff** for linting/formatting, **mypy** for type checking
+- **pytest** + **pytest-asyncio** for testing with **httpx** for API client testing
+- **Alembic** for database migrations when DB feature is enabled
+- **Uvicorn** for development server with hot reload
+
+### React UI Package  
+- **React 19** + **Vite** + **TypeScript**
+- **TanStack Router** for file-based routing + **TanStack Query** for server state
+- **Tailwind CSS** + **Radix UI** for styling and components
+- **Vitest** + **@testing-library/react** for testing
+- **Storybook v8** for component development and documentation
+
+### Database Package
+- **PostgreSQL** with **asyncpg** driver
+- **Alembic** for migration management
+- **Docker Compose** for local development
+- **Connection pooling** and **environment-based configuration**
+
+## PRODUCTION READINESS FEATURES
+
+### Generated Project Includes
+- **GitHub Actions** workflows for CI/CD
+- **Docker** configurations for containerization
+- **Helm charts** for Kubernetes deployment
+- **Environment-based configuration** (dev, staging, production)
+- **Health check endpoints** for monitoring
+- **Logging configuration** with structured logging
+- **Security headers** and CORS configuration
+- **Database migration management**
+
+### Development Experience
+- **Hot reload** for both frontend and backend
+- **Type checking** in CI and pre-commit hooks
+- **Automated formatting** with ruff (Python) and Prettier (TypeScript)
+- **Import sorting** and **dependency management**
+- **Comprehensive test coverage** with reporting
+- **API documentation** auto-generated from OpenAPI specs
+
+This architecture provides a robust, scalable foundation for generating production-ready full-stack applications with modern tooling and best practices.

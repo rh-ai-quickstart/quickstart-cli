@@ -1,0 +1,88 @@
+---
+description: React, TanStack Router, TanStack Query, and Vite best practices
+globs: ["**/*.tsx", "**/*.ts", "**/src/**/*", "**/vite.config.*", "**/vitest.config.*"]
+alwaysApply: false
+---
+
+# React TanStack & Vite Standards
+
+## TANSTACK ROUTER
+- Use **file-based routing** with proper TypeScript integration
+- Define **route schemas** with zod for search params and path params
+- Use **lazy loading** for route components to enable code splitting
+- Implement **route-level error boundaries** for graceful error handling
+- Use **loaders** for data fetching that blocks navigation
+- Use **router.invalidate()** for cache invalidation after mutations
+- Leverage **typesafe navigation** with router.navigate()
+
+## TANSTACK REACT QUERY
+- Use **query keys** as arrays with hierarchical structure
+- Implement **proper error handling** with error boundaries
+- Use **optimistic updates** for better UX in mutations
+- Use **infinite queries** for paginated data
+- Use **query invalidation** strategically after mutations
+- Use **stale-while-revalidate** patterns for background updates
+- Use **devtools** in development for debugging
+
+## REACT 19 PATTERNS
+- Use **functional components** with hooks exclusively
+- Use **useCallback** and **useMemo** sparingly (only for proven performance issues)
+- Use **useTransition** for non-urgent state updates
+- Use **React.memo** for expensive components that receive stable props
+- Use **custom hooks** for reusable stateful logic
+- Use **error boundaries** for graceful error handling
+- Use **Suspense** for async data loading and code splitting
+
+## RADIX UI COMPONENTS
+- Use **Radix primitives** over custom implementations for accessibility
+- Compose **compound components** following Radix patterns
+- Use **data-attributes** for styling instead of class manipulation
+- Implement **proper ARIA** attributes (Radix handles most automatically)
+- Use **forwardRef** when wrapping Radix components
+- Use **asChild** prop for composition flexibility
+- Test **keyboard navigation** for all interactive components
+
+## STYLING WITH TAILWIND
+- Use **class-variance-authority** for component variant patterns
+- Use **tailwind-merge** for conditional className merging (clsx + twMerge)
+- Use **Tailwind CSS variables** for design tokens
+- Use **responsive design** with mobile-first approach
+- Use **dark mode** classes with system preference detection
+- Use **@layer** directives for custom CSS organization
+- Use **tailwindcss-animate** for consistent animations
+
+## ZOD VALIDATION
+- Define **schemas** for all external data (API responses, forms, env vars)
+- Use **zod.infer** for TypeScript type generation
+- Use **transform** for data normalization
+- Use **refine** for custom validation logic
+- Use **partial** and **pick** for schema composition
+- Use **discriminated unions** for polymorphic data
+- Use **coerce** for type coercion from strings
+
+## VITE & VITEST
+- Use **Vite plugins** for TypeScript, React, and TanStack Router
+- Use **environment variables** with VITE_ prefix for client-side config
+- Use **code splitting** with dynamic imports for better performance
+- Use **Vitest** for unit and integration testing
+- Use **@vitest/ui** for interactive test debugging
+- Use **@vitest/coverage-v8** for coverage reporting
+- Use **mock service worker** for API mocking in tests
+
+## PERFORMANCE
+- Use **React.lazy** for route-level code splitting
+- Use **TanStack Router's lazy loading** for components
+- Optimize **bundle size** with proper tree shaking
+- Use **React DevTools Profiler** for performance debugging
+- Use **web-vitals** for measuring Core Web Vitals
+- Use **@tanstack/react-query-devtools** for cache inspection
+- Implement **proper loading states** to improve perceived performance
+
+## STORYBOOK INTEGRATION
+- Use **Storybook v8** for component development and documentation
+- Use **@storybook/test** for interaction testing
+- Use **controls** for dynamic component property testing
+- Use **decorators** for global providers (query client, router context)
+- Use **play functions** for automated interaction testing
+- Document **component variants** and **accessibility features**
+- Use **Storybook's auto-generated docs** with proper JSDoc comments

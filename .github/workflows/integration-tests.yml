@@ -1,0 +1,63 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+        node-version: ['18', '20']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Install dependencies
+      working-directory: .
+      run: pnpm install
+
+    - name: Build
+      working-directory: .
+      run: pnpm build
+
+    - name: Run unit tests
+      working-directory: .
+      run: pnpm test
+
+    - name: Run integration tests
+      working-directory: .
+      run: pnpm test:integration
+      env:
+        # Ensure tests have enough time in CI
+        VITEST_TIMEOUT: 300000
+
+    - name: Upload test artifacts
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-artifacts-${{ matrix.python-version }}-${{ matrix.node-version }}
+        path: |
+          /tmp/integration-test-*/
+        retention-days: 7

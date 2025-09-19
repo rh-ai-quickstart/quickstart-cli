@@ -1,0 +1,35 @@
+---
+description: General project standards and documentation guidelines
+globs: []
+alwaysApply: true
+---
+
+# Project Standards
+
+## GENERAL PRINCIPLES
+- **Clarity over cleverness** - Optimize for maintainability and readability
+- **Single source of truth** - Types, environment variables, design tokens, and configuration
+- **Small and cohesive** - Keep functions, modules, and components focused
+- **Fail fast in dev, gracefully in prod** - Loud failures during development, user-friendly errors in production
+- **Automate consistency** - Use formatters, linters, codegen, and CI gates
+
+## DOCUMENTATION
+- Keep CLI help text concise but informative
+- Include examples in README for common use cases
+- Document template customization options
+- Provide migration guides when updating template structures
+- **Living README** - Keep setup, scripts, and architecture overview current
+- **Clean code** - Inline docs for complex logic; delete dead code and stale comments
+
+## VERSION CONTROL
+- Use Conventional Commits for commit messages
+- Small, focused pull requests with clear intent
+- Require code review before merging
+- Semantic versioning for releases
+- Maintain CHANGELOG for all releases
+
+## SECURITY
+- Store secrets only in secure environment variables; never commit secrets
+- Validate all inputs at boundaries
+- Follow principle of least privilege
+- Regular dependency updates with security scanning
