@@ -2,7 +2,7 @@ import { SourceTemplateParams } from '.';
 
 export const generateDatabaseModule = (params: SourceTemplateParams): string => {
   const { config } = params;
-  return `"""
+  return /* python */ `"""
 Database configuration and utilities
 """
 

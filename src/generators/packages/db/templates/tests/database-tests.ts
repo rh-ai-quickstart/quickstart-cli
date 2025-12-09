@@ -1,5 +1,5 @@
 export const generateDatabaseTests = (): string => {
-  return `"""
+  return /* python */ `"""
 Database tests
 """
 

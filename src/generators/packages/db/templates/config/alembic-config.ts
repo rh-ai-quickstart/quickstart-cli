@@ -2,7 +2,7 @@ import { ConfigTemplateParams } from '.';
 
 export const generateAlembicConfig = (params: ConfigTemplateParams): string => {
   const { config } = params;
-  return `# A generic, single database configuration.
+  return /* ini */ `# A generic, single database configuration.
 
 [alembic]
 # path to migration scripts

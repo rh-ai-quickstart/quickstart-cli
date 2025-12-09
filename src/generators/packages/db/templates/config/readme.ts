@@ -1,154 +1,156 @@
 import { ConfigTemplateParams } from '.';
+import { normalizeServiceName } from '../../../../utils/name-normalize.js';
 
 export const generateReadme = (params: ConfigTemplateParams): string => {
   const { config } = params;
+  const serviceName = normalizeServiceName(config.name, 'db');
   return `# ${config.name} Database
 
-PostgreSQL database setup with Docker Compose and Alembic migrations.
+PostgreSQL database setup with Podman Compose and Alembic migrations.
+
+PostgreSQL database architecture and development guide.
+
+> **Setup & Installation**: See the [root README](../../README.md) for installation and quick start instructions.
 
 ## Features
 
-- **PostgreSQL 15** - Modern relational database with advanced features
-- **Docker Compose** - Easy database setup and management
-- **Alembic** - Database migrations with SQLAlchemy
-- **Async SQLAlchemy** - Modern async database operations
-- **Connection Pooling** - Optimized database connections
-- **Testing** - Test utilities with transaction rollback
+- **PostgreSQL 16**: Latest PostgreSQL database with async support
+- **Podman Compose**: Container orchestration for local development
+- **Alembic**: Database migration management
+- **Async SQLAlchemy**: Non-blocking database operations
+- **Connection Pooling**: Efficient connection reuse
+- **Health Checks**: Built-in database health monitoring
 
 ## Quick Start
 
-### Prerequisites
-- Docker and Docker Compose
-- Python 3.11+ (for running migrations)
-
-### Setup
-
-1. **Start the database**:
 \`\`\`bash
+# Start the database container
 pnpm db:start
-\`\`\`
 
-This starts a PostgreSQL container with the following configuration:
-- **Host**: localhost
-- **Port**: 5432
-- **Database**: ${config.name}
-- **Username**: user
-- **Password**: password
-
-2. **Run initial migrations**:
-\`\`\`bash
-pnpm upgrade
-\`\`\`
-
-## Available Scripts
-
-\`\`\`bash
-# Database Management
-pnpm db:start       # Start PostgreSQL container
-pnpm db:stop        # Stop and remove containers
-pnpm db:logs        # View database logs
-
-# Migration Management
-pnpm upgrade        # Apply all pending migrations
-pnpm downgrade      # Rollback last migration
-pnpm revision       # Create new migration (auto-generate)
-pnpm history        # Show migration history
-
-# Development
-pnpm reset          # Stop, remove containers, and restart
-\`\`\`
-
-## Database Configuration
-
-### Environment Variables
-Create a \`.env\` file in the project root:
-
-\`\`\`env
-# Database connection
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/${config.name}
-DB_ECHO=false
-
-# Docker configuration
-POSTGRES_DB=${config.name}
-POSTGRES_USER=user
-POSTGRES_PASSWORD=password
-\`\`\`
-
-### Connection String Format
-\`\`\`
-postgresql+asyncpg://[user[:password]@][host[:port]][/database]
-\`\`\`
-
-## Migrations
-
-### Creating Migrations
-
-1. **Auto-generate migration** (recommended):
-\`\`\`bash
-pnpm revision -m "add user table"
-\`\`\`
-
-2. **Manual migration**:
-\`\`\`bash
-alembic revision -m "add custom index"
-\`\`\`
-
-### Migration Commands
-
-\`\`\`bash
 # Apply migrations
-alembic upgrade head              # Apply all pending
-alembic upgrade +2                # Apply next 2 migrations
-alembic upgrade ae1027a6acf       # Apply to specific revision
+pnpm upgrade
 
-# Rollback migrations
-alembic downgrade -1              # Rollback 1 migration
-alembic downgrade base            # Rollback all migrations
-alembic downgrade ae1027a6acf     # Rollback to specific revision
-
-# Information
-alembic history                   # Show migration history
-alembic current                   # Show current revision
-alembic show ae1027a6acf         # Show specific migration
+# View database logs
+pnpm db:logs
 \`\`\`
+
+## Architecture Overview
+
+This database package provides async SQLAlchemy integration with Alembic migrations:
+
+\`\`\`
+Application → DatabaseService → AsyncSession → PostgreSQL
+                ↓
+         Connection Pooling
+                ↓
+         Health Checks
+\`\`\`
+
+### Key Architectural Patterns
+
+- **Async SQLAlchemy**: Non-blocking database operations using \`asyncpg\` driver
+- **Connection Pooling**: Managed by SQLAlchemy engine for efficient connection reuse
+- **Dependency Injection**: \`DatabaseService\` and session management via FastAPI dependencies
+- **Migration Management**: Alembic for version-controlled schema changes
+- **Service Pattern**: \`DatabaseService\` class provides health checks and session management
 
 ## Project Structure
 
 \`\`\`
 src/
-└── database.py              # Database engine and session configuration
+└── db/
+    ├── __init__.py          # Package exports (DatabaseService, get_db_service)
+    └── database.py          # Database engine, session factory, DatabaseService class
 
 alembic/
-├── versions/                 # Migration files
+├── versions/                 # Migration files (auto-generated)
 ├── env.py                   # Alembic environment configuration
 └── script.py.mako          # Migration template
 
 tests/
-└── test_database.py         # Database connection tests
+└── test_database.py         # Database connection and health check tests
 
-compose.yml                   # Docker Compose configuration
 alembic.ini                  # Alembic configuration
 pyproject.toml               # Python dependencies
+
+# Note: compose.yml is at project root, not in this package
 \`\`\`
 
-## Database Schema
+### Directory Purposes
 
-### Best Practices
+- **\`src/db/database.py\`**: Core database module containing:
+  - \`engine\`: SQLAlchemy async engine with connection pooling
+  - \`SessionLocal\`: Session factory for creating database sessions
+  - \`Base\`: Declarative base for SQLAlchemy models
+  - \`DatabaseService\`: Service class for health checks and session management
+  - \`get_db_service()\`: FastAPI dependency function for dependency injection
 
-1. **Table Names**: Use singular nouns (e.g., \`user\`, not \`users\`)
-2. **Column Names**: Use snake_case
-3. **Primary Keys**: Use \`id\` as the primary key column name
-4. **Foreign Keys**: Use \`table_id\` format (e.g., \`user_id\`)
-5. **Timestamps**: Include \`created_at\` and \`updated_at\` columns
-6. **Indexes**: Add indexes for frequently queried columns
+- **\`alembic/\`**: Alembic migration system:
+  - \`versions/\`: Migration files (one per schema change)
+  - \`env.py\`: Alembic environment configuration (connects to database, loads models)
+  - \`script.py.mako\`: Template for new migration files
 
-### Example Model
+- **\`tests/\`**: Database tests. Use transaction rollback for test isolation.
+
+## Database Service Architecture
+
+### DatabaseService Class
+
+The \`DatabaseService\` provides a clean interface for database operations:
 
 \`\`\`python
-from sqlalchemy import Column, Integer, String, DateTime, func
-from sqlalchemy.ext.declarative import declarative_base
+from db import DatabaseService, get_db_service
 
-Base = declarative_base()
+# In FastAPI routes (via dependency injection)
+@router.get("/users")
+async def get_users(db_service: DatabaseService = Depends(get_db_service)):
+    # Use db_service for database operations
+    session = await db_service.get_session()
+    # ... use session
+\`\`\`
+
+### Connection Pooling
+
+The SQLAlchemy engine manages a connection pool automatically:
+
+\`\`\`python
+# src/db/database.py
+engine = create_async_engine(DATABASE_URL, echo=True)
+\`\`\`
+
+**Key settings:**
+- \`echo=True\`: Logs SQL queries (set to \`False\` in production)
+- Connection pool size managed automatically
+- Connections are reused efficiently
+
+### Session Management
+
+Sessions are created via the \`SessionLocal\` factory:
+
+\`\`\`python
+async with SessionLocal() as session:
+    # Use session for queries
+    result = await session.execute(select(User))
+\`\`\`
+
+**Best practices:**
+- Always use \`async with\` for proper cleanup
+- Sessions are not thread-safe (use one per request)
+- Use dependency injection in FastAPI routes
+
+## Adding New Models
+
+Follow these steps to add a new database model:
+
+### 1. Define SQLAlchemy Model
+
+Create a model file (typically in \`src/db/models.py\` or similar):
+
+\`\`\`python
+# src/db/models.py
+from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy.orm import declarative_base
+from db.database import Base
 
 class User(Base):
     __tablename__ = "user"
@@ -160,67 +162,292 @@ class User(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 \`\`\`
 
-## Development Workflow
+### 2. Import Models in Alembic
 
-### 1. Schema Changes
-1. Modify your SQLAlchemy models
-2. Generate migration: \`pnpm revision -m "description"\`
-3. Review the generated migration file
-4. Apply migration: \`pnpm upgrade\`
+Ensure Alembic can discover your models. Update \`alembic/env.py\` to import your models:
 
-### 2. Data Changes
-1. Create manual migration: \`alembic revision -m "data migration"\`
-2. Edit the migration file to include data operations
-3. Apply migration: \`pnpm upgrade\`
-
-### 3. Testing
-1. Start test database: \`pnpm db:start\`
-2. Run migrations: \`pnpm upgrade\`
-3. Run tests: \`python -m pytest tests/\`
-
-## Troubleshooting
-
-### Common Issues
-
-**Port already in use**:
-\`\`\`bash
-pnpm db:stop
-docker container prune
-pnpm db:start
+\`\`\`python
+# alembic/env.py (already configured)
+from db.database import Base
+# Import all models here so Alembic can detect them
+from db import models  # or specific imports
 \`\`\`
 
-**Migration conflicts**:
+### 3. Generate Migration
+
+Auto-generate a migration based on model changes:
+
 \`\`\`bash
-alembic history
-alembic downgrade [conflicting_revision]
-# Resolve conflicts in migration files
-alembic upgrade head
+pnpm revision -m "add user table"
 \`\`\`
 
-**Connection refused**:
-- Ensure Docker is running
-- Check if database container is started: \`docker ps\`
-- Verify connection string in environment variables
+This creates a new file in \`alembic/versions/\` with the migration SQL.
 
-### Database Reset
-To completely reset the database:
+### 4. Review Migration
+
+Always review the generated migration file:
+
+\`\`\`python
+# alembic/versions/xxxx_add_user_table.py
+def upgrade():
+    op.create_table(
+        'user',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('email', sa.String(length=255), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('email')
+    )
+
+def downgrade():
+    op.drop_table('user')
+\`\`\`
+
+### 5. Apply Migration
+
+Apply the migration to your database:
+
 \`\`\`bash
-pnpm db:stop
-docker volume prune
-pnpm db:start
 pnpm upgrade
 \`\`\`
 
-## Production Considerations
+### Model Best Practices
 
-- Use connection pooling for better performance
-- Set up database backups
-- Monitor database performance
-- Use environment-specific configurations
-- Implement proper error handling and logging
+- **Table Names**: Use singular nouns (\`user\`, not \`users\`)
+- **Column Names**: Use snake_case (\`created_at\`, not \`createdAt\`)
+- **Primary Keys**: Always use \`id\` as the primary key column name
+- **Foreign Keys**: Use \`table_id\` format (e.g., \`user_id\`)
+- **Timestamps**: Include \`created_at\` and \`updated_at\` on all tables
+- **Indexes**: Add indexes for frequently queried columns
+- **Constraints**: Use database-level constraints (unique, foreign keys, check)
+
+## Database Schema
+
+The database schema is managed through SQLAlchemy models and Alembic migrations. Models define the structure of your database tables, and migrations track changes over time.
+
+### Best Practices
+
+- **Version Control**: Always commit migration files to version control
+- **Review Migrations**: Review auto-generated migrations before applying them
+- **Test Migrations**: Test migrations in development before applying to production
+- **Backup Before Migration**: Always backup your database before running migrations in production
+- **Rollback Plan**: Have a rollback plan for every migration
+- **Naming Conventions**: Follow consistent naming conventions for tables, columns, and indexes
+- **Documentation**: Document complex migrations and schema changes
+
+## Migration Workflow
+
+### Schema Changes (Auto-Generated)
+
+For most schema changes, use auto-generation:
+
+\`\`\`bash
+# 1. Modify your SQLAlchemy models
+# 2. Generate migration
+pnpm revision -m "add user table"
+
+# 3. Review the generated migration file
+# 4. Apply migration
+pnpm upgrade
+\`\`\`
+
+### Data Migrations (Manual)
+
+For data transformations, create manual migrations:
+
+\`\`\`bash
+# 1. Create empty migration
+alembic revision -m "migrate user emails to lowercase"
+
+# 2. Edit the migration file
+\`\`\`
+
+\`\`\`python
+# alembic/versions/xxxx_migrate_user_emails.py
+def upgrade():
+    # Data migration logic
+    connection = op.get_bind()
+    connection.execute(
+        sa.text("UPDATE user SET email = LOWER(email)")
+    )
+
+def downgrade():
+    # Rollback logic if needed
+    pass
+\`\`\`
+
+\`\`\`bash
+# 3. Apply migration
+pnpm upgrade
+\`\`\`
+
+### Migration Commands
+
+\`\`\`bash
+# Apply migrations
+pnpm upgrade                    # Apply all pending migrations
+alembic upgrade head            # Same as above
+alembic upgrade +2              # Apply next 2 migrations
+alembic upgrade ae1027a6acf     # Apply to specific revision
+
+# Rollback migrations
+pnpm downgrade                  # Rollback last migration
+alembic downgrade -1            # Same as above
+alembic downgrade base          # Rollback all migrations
+alembic downgrade ae1027a6acf   # Rollback to specific revision
+
+# Information
+pnpm history                    # Show migration history
+alembic current                 # Show current revision
+alembic show ae1027a6acf       # Show specific migration
+\`\`\`
+
+### Rollback Strategies
+
+**Development:**
+- Rollback is safe and common
+- Use \`pnpm downgrade\` to undo last migration
+
+**Production:**
+- Always test migrations in staging first
+- Have a rollback plan before applying
+- Consider zero-downtime migration strategies
+- Never rollback migrations that have been applied to production for more than a few hours
+
+## Using Models in API Package
+
+When the API package is enabled, use models via dependency injection:
+
+\`\`\`python
+# In API package: src/routes/users.py
+from fastapi import APIRouter, Depends
+from db import DatabaseService, get_db_service
+from sqlalchemy import select
+from db.models import User
+
+router = APIRouter()
+
+@router.get("/users/{user_id}")
+async def get_user(
+    user_id: int,
+    db_service: DatabaseService = Depends(get_db_service)
+):
+    session = await db_service.get_session()
+    async with session:
+        result = await session.execute(
+            select(User).where(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        return user
+\`\`\`
+
+See the [API package README](../../api/README.md) for more details on using database models in routes.
+
+## Testing Database Code
+
+### Test Structure
+
+Tests use \`pytest\` with \`pytest-asyncio\` for async support:
+
+\`\`\`python
+# tests/test_database.py
+import pytest
+from db import DatabaseService
+
+@pytest.mark.asyncio
+async def test_database_health_check():
+    service = DatabaseService()
+    health = await service.health_check()
+    assert health["status"] == "healthy"
+\`\`\`
+
+### Transaction Rollback Pattern
+
+For tests that modify the database, use transaction rollback:
+
+\`\`\`python
+@pytest.mark.asyncio
+async def test_create_user(db_session):
+    # db_session is automatically rolled back after test
+    from db.models import User
+    
+    user = User(email="test@example.com", name="Test User")
+    db_session.add(user)
+    await db_session.commit()
+    
+    # Test assertions
+    assert user.id is not None
+\`\`\`
+
+### Running Tests
+
+\`\`\`bash
+# Start test database
+pnpm db:start
+
+# Run migrations
+pnpm upgrade
+
+# Run tests
+python -m pytest tests/
+\`\`\`
+
+## Configuration
+
+### Environment Variables
+
+Database configuration is managed via environment variables:
+
+\`\`\`env
+# Database connection (project root .env file)
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/${config.name}
+DB_ECHO=false  # Set to true for SQL query logging
+\`\`\`
+
+### Connection String Format
+
+\`\`\`
+postgresql+asyncpg://[user[:password]@][host[:port]][/database]
+\`\`\`
+
+**Components:**
+- \`postgresql+asyncpg\`: Driver specification (required for async)
+- \`user:password\`: Database credentials
+- \`host:port\`: Database server (default: localhost:5432)
+- \`database\`: Database name
+
+### Database Container
+
+The database runs in a Podman container managed from the project root:
+
+- **Service Name**: ${serviceName}
+- **Host**: localhost
+- **Port**: 5432
+- **Database**: ${config.name}
+- **Username**: user
+- **Password**: password
+
+**Note**: The \`compose.yml\` file is at the project root, not in this package.
+
+## Available Scripts
+
+\`\`\`bash
+# Database Management
+pnpm db:start       # Start PostgreSQL container
+pnpm db:stop        # Stop container
+pnpm db:logs        # View logs
+
+# Migration Management
+pnpm upgrade        # Apply all pending migrations
+pnpm downgrade      # Rollback last migration
+pnpm revision -m "message"  # Create new migration
+pnpm history        # Show migration history
+\`\`\`
 
 ---
 
-Generated with [AI Kickstart CLI](https://github.com/your-org/ai-kickstart)
+Generated with [AI QuickStart CLI](https://github.com/TheiaSurette/quickstart-cli)
 `;
 };

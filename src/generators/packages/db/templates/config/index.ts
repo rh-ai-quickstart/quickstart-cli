@@ -7,6 +7,6 @@ export interface ConfigTemplateParams {
 
 export * from './package-json.js';
 export * from './pyproject-toml.js';
-export * from './docker-compose.js';
+export * from './podman-compose.js';
 export * from './alembic-config.js';
 export * from './readme.js';

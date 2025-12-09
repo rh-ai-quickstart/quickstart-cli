@@ -9,7 +9,6 @@ import { ProjectConfig } from '../../../types/features.js';
 import {
   generatePackageJson,
   generatePyprojectToml,
-  generateDockerCompose,
   generateAlembicConfig,
   generateReadme,
   ConfigTemplateParams,
@@ -72,7 +71,6 @@ export class DBPackageGenerator {
       'README.md': generateReadme(this.templateParams),
       'package.json': generatePackageJson(this.templateParams),
       'pyproject.toml': generatePyprojectToml(this.templateParams),
-      'compose.yml': generateDockerCompose(this.templateParams),
       'alembic.ini': generateAlembicConfig(this.templateParams),
     };
 

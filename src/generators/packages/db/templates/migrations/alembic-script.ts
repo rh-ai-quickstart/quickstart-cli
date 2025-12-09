@@ -1,5 +1,5 @@
 export const generateAlembicScript = (): string => {
-  return `"""\${message}
+  return /* python */ `"""\${message}
 
 Revision ID: \${up_revision}
 Revises: \${down_revision | comma,n}

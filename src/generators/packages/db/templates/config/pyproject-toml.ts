@@ -2,7 +2,7 @@ import { ConfigTemplateParams } from '.';
 
 export const generatePyprojectToml = (params: ConfigTemplateParams): string => {
   const { config } = params;
-  return `[build-system]
+  return /* toml */ `[build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
