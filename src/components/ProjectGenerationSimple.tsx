@@ -34,6 +34,7 @@ export function ProjectGenerationSimple({
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [currentFile, setCurrentFile] = useState('');
+  const [totalSteps, setTotalSteps] = useState(STEP_LABELS.length);
 
   useEffect(() => {
     generateProject();
@@ -56,6 +57,7 @@ export function ProjectGenerationSimple({
           setProgress(progressPercent);
           setCurrentStepIndex(step.currentStep - 1);
           setCurrentFile(step.message);
+          setTotalSteps(step.totalSteps);
 
           // Continue to next step after a delay
           setTimeout(processNextStep, 200);
@@ -92,7 +94,7 @@ export function ProjectGenerationSimple({
         progress={progress}
         label={currentStepLabel || 'Processing...'}
         currentStep={currentStepIndex + 1}
-        totalSteps={STEP_LABELS.length}
+        totalSteps={totalSteps}
         isComplete={isComplete}
         width={50}
       />

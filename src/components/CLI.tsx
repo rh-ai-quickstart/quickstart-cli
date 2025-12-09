@@ -20,9 +20,11 @@ function GlobalHelp() {
 
   return (
     <Box flexDirection="column" paddingX={2} paddingY={1}>
-      <Gradient name="rainbow">
-        <BigText text="AI Kickstart" font="block" />
-      </Gradient>
+      <Box>
+        <Text color="cyan" bold>
+          AI QuickStart CLI
+        </Text>
+      </Box>
 
       <Text color="gray">Create and manage AI-powered full-stack applications</Text>
 
@@ -31,7 +33,7 @@ function GlobalHelp() {
           Usage:
         </Text>
       </Box>
-      <Text> rh-ai-kickstart &lt;command&gt; [options]</Text>
+      <Text> quickstart &lt;command&gt; [options]</Text>
 
       <Box marginTop={1}>
         <Text color="green" bold>
@@ -70,14 +72,14 @@ function GlobalHelp() {
           Examples:
         </Text>
       </Box>
-      <Text color="gray"> rh-ai-kickstart create my-app</Text>
-      <Text color="gray"> rh-ai-kickstart add-package auth</Text>
-      <Text color="gray"> rh-ai-kickstart remove-package old-feature</Text>
-      <Text color="gray"> rh-ai-kickstart create --help</Text>
+      <Text color="gray"> quickstart create my-app</Text>
+      <Text color="gray"> quickstart create --help</Text>
+      <Text color="gray"> quickstart create my-app --packages api,ui,db</Text>
+      <Text color="gray"> quickstart create my-app -p api,ui -d "My project"</Text>
 
       <Box marginTop={1}>
         <Text color="gray">
-          For more information, visit: https://github.com/your-org/ai-kickstart
+          For more information, visit: https://github.com/TheiaSurette/quickstart-cli
         </Text>
       </Box>
     </Box>
@@ -91,14 +93,36 @@ function CommandHelp({ command }: { command: string }) {
     return (
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Text color="red">❌ Unknown command: {command}</Text>
-        <Text>Run 'rh-ai-kickstart --help' to see available commands.</Text>
+        <Text>Run 'quickstart --help' to see available commands.</Text>
       </Box>
     );
   }
 
+  // Define options for each command
+  const commandOptions: Record<string, Array<{ flag: string; description: string }>> = {
+    create: [
+      {
+        flag: '--skip-dependencies, -s',
+        description: 'Skip installing dependencies after generation',
+      },
+      {
+        flag: '--output-dir, -o <path>',
+        description: 'Output directory for the project (default: current directory)',
+      },
+      {
+        flag: '--packages, -p <packages>',
+        description:
+          'Comma-separated list of packages: api, ui, db (spaces after commas are allowed)',
+      },
+      { flag: '--description, -d <text>', description: 'Project description' },
+    ],
+  };
+
+  const options = commandOptions[cmd.name] || [];
+
   return (
     <Box flexDirection="column" paddingX={2} paddingY={1}>
-      <Text color="green" bold>
+      <Text color="cyan" bold>
         Command: {cmd.name}
       </Text>
       <Text color="gray">{cmd.description}</Text>
@@ -109,6 +133,24 @@ function CommandHelp({ command }: { command: string }) {
         </Text>
       </Box>
       <Text> {cmd.usage}</Text>
+
+      {options.length > 0 && (
+        <>
+          <Box marginTop={1}>
+            <Text color="green" bold>
+              Options:
+            </Text>
+          </Box>
+          {options.map((option, index) => (
+            <Box key={index} flexDirection="row" marginLeft={2}>
+              <Box width={28}>
+                <Text color="yellow">{option.flag}</Text>
+              </Box>
+              <Text color="gray">{option.description}</Text>
+            </Box>
+          ))}
+        </>
+      )}
 
       <Box marginTop={1}>
         <Text color="green" bold>
@@ -150,7 +192,7 @@ export function CLI({ args }: CLIProps) {
     return (
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Text color="red">❌ No command provided</Text>
-        <Text>Run 'rh-ai-kickstart --help' to see available commands.</Text>
+        <Text>Run 'quickstart --help' to see available commands.</Text>
       </Box>
     );
   }
@@ -161,7 +203,7 @@ export function CLI({ args }: CLIProps) {
     return (
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Text color="red">❌ Unknown command: {args.command}</Text>
-        <Text>Run 'rh-ai-kickstart --help' to see available commands.</Text>
+        <Text>Run 'quickstart --help' to see available commands.</Text>
       </Box>
     );
   }

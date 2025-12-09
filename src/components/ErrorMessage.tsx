@@ -96,8 +96,8 @@ export function ErrorMessage({ error, onRestart, onExit }: ErrorMessageProps) {
           <Text color="blue" bold>
             🔧 Troubleshooting Resources:
           </Text>
-          <Text>• Documentation: https://github.com/your-org/ai-kickstart</Text>
-          <Text>• Issues: https://github.com/your-org/ai-kickstart/issues</Text>
+          <Text>• Documentation: https://github.com/TheiaSurette/quickstart-cli</Text>
+          <Text>• Issues: https://github.com/TheiaSurette/quickstart-cli/issues</Text>
           <Text>• Discord: https://discord.gg/your-server</Text>
         </Box>
 

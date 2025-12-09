@@ -40,11 +40,15 @@ export function ProjectSetupForm({
   onCancel,
 }: ProjectSetupFormProps) {
   const [step, setStep] = useState<FormStep>(
-    initialName && initialDescription && cliFeatures ? 'confirm' :
-    initialName && initialDescription ? 'packageManager' : 
-    initialName && cliFeatures ? 'description' :
-    initialName ? 'description' : 
-    'name'
+    initialName && initialDescription && cliFeatures
+      ? 'confirm'
+      : initialName && initialDescription
+      ? 'packageManager'
+      : initialName && cliFeatures
+      ? 'description'
+      : initialName
+      ? 'description'
+      : 'name'
   );
   const [formData, setFormData] = useState<FormData>({
     name: initialName || '',
@@ -65,8 +69,6 @@ export function ProjectSetupForm({
   const [descriptionInput, setDescriptionInput] = useState(initialDescription || '');
   const [nameError, setNameError] = useState<string | null>(null);
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(0);
-
-
 
   const validateName = (name: string): string | null => {
     try {
@@ -127,7 +129,7 @@ export function ProjectSetupForm({
   const renderHeader = () => (
     <Box flexDirection="column" marginBottom={1}>
       <Text color="cyan" bold>
-        🚀 Create AI Kickstart Project
+        Create AI QuickStart Project
       </Text>
       <Text color="gray">
         Use arrow keys to navigate • Space to select • Enter to continue • Esc to cancel
@@ -152,9 +154,13 @@ export function ProjectSetupForm({
             const error = validateName(cleanName);
             if (!error) {
               setFormData({ ...formData, name: cleanName });
-              setStep(initialDescription && cliFeatures ? 'confirm' : 
-                      initialDescription ? 'packageManager' :
-                      'description');
+              setStep(
+                initialDescription && cliFeatures
+                  ? 'confirm'
+                  : initialDescription
+                  ? 'packageManager'
+                  : 'description'
+              );
             }
           }}
           placeholder="my-awesome-app"
@@ -213,10 +219,10 @@ export function ProjectSetupForm({
                 label: pm.label,
                 value: pm.value,
               }))}
-                        onSelect={(item) => {
-            setFormData({ ...formData, packageManager: item.value });
-            setStep(cliFeatures ? 'confirm' : 'packages');
-          }}
+              onSelect={(item) => {
+                setFormData({ ...formData, packageManager: item.value });
+                setStep(cliFeatures ? 'confirm' : 'packages');
+              }}
               initialIndex={packageManagers.findIndex((pm) => pm.value === formData.packageManager)}
             />
           </Box>

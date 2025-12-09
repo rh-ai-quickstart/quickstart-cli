@@ -4,19 +4,6 @@ import { render } from 'ink-testing-library';
 import { App } from '../App';
 
 describe('App', () => {
-  it('should render welcome screen initially', () => {
-    const args = {
-      outputDir: '/test',
-    };
-
-    const { lastFrame } = render(<App args={args} />);
-
-    // Should show the big text banner and tagline
-    const output = lastFrame();
-    expect(output).toMatch(/AI.*Kickstart|█.*█/); // Big text or ASCII art
-    expect(output).toContain('One-click AI-powered full-stack applications');
-  });
-
   it('should skip to generation when all required fields are provided', () => {
     const args = {
       name: 'test-project',

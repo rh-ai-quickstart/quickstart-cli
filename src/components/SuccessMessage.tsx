@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import { Box, Text, useApp } from 'ink';
 import BigText from 'ink-big-text';
 import Gradient from 'ink-gradient';
 
@@ -23,7 +23,7 @@ export function SuccessMessage({ projectPath, projectName }: SuccessMessageProps
       </Gradient>
 
       <Box flexDirection="column" borderStyle="round" borderColor="green" padding={1} width={60}>
-        <Text color="gray">Your kickstart is ready!</Text>
+        <Text color="gray">Your QuickStart is ready!</Text>
         <Text>
           📁 Location: <Text color="cyan">{projectPath}</Text>
         </Text>
@@ -47,7 +47,15 @@ export function SuccessMessage({ projectPath, projectName }: SuccessMessageProps
             <Text color="yellow">2.</Text>
             <Box marginLeft={1}>
               <Text>
-                <Text color="cyan">pnpm</Text> <Text color="blue">dev</Text>
+                <Text color="cyan">make</Text> <Text color="blue">setup</Text>
+              </Text>
+            </Box>
+          </Box>
+          <Box flexDirection="row" marginLeft={1}>
+            <Text color="yellow">3.</Text>
+            <Box marginLeft={1}>
+              <Text>
+                <Text color="cyan">make</Text> <Text color="blue">dev</Text>
               </Text>
             </Box>
           </Box>
@@ -62,10 +70,13 @@ export function SuccessMessage({ projectPath, projectName }: SuccessMessageProps
               • Check <Text color="cyan">README.md</Text>
             </Text>
             <Text>
-              • <Text color="cyan">pnpm</Text> <Text color="blue">build</Text> for production
+              • <Text color="cyan">make</Text> <Text color="blue">build</Text> for production
             </Text>
             <Text>
-              • <Text color="cyan">pnpm</Text> <Text color="blue">test</Text> to run test suites
+              • <Text color="cyan">make</Text> <Text color="blue">test</Text> to run test suites
+            </Text>
+            <Text>
+              • <Text color="cyan">make</Text> <Text color="blue">help</Text> to see all commands
             </Text>
             <Text>
               • Customize in <Text color="cyan">packages/</Text>
@@ -75,7 +86,7 @@ export function SuccessMessage({ projectPath, projectName }: SuccessMessageProps
 
         <Box marginTop={1}>
           <Text color="gray">
-            Happy coding! 🚀 Visit https://github.com/your-org/ai-kickstart for docs.
+            Happy coding! 🚀 Visit https://github.com/TheiaSurette/quickstart-cli for docs.
           </Text>
         </Box>
       </Box>

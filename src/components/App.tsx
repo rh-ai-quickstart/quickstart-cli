@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useApp } from 'ink';
+import React, { useState } from 'react';
+import { useApp } from 'ink';
 import { z } from 'zod';
-import BigText from 'ink-big-text';
-import Gradient from 'ink-gradient';
 import { ProjectSetupForm } from './ProjectSetupForm.js';
 import { ProjectGenerationSimple as ProjectGeneration } from './ProjectGenerationSimple.js';
 import { SuccessMessage } from './SuccessMessage.js';
 import { ErrorMessage } from './ErrorMessage.js';
-import { ProjectConfig } from '../types/features.js';
+import { ProjectConfig, PackageIdEnum, PACKAGES } from '../types/features.js';
 
 const ArgsSchema = z.object({
   name: z.string().optional(),
   skipDependencies: z.boolean().default(false),
-  skipHeader: z.boolean().default(false),
   outputDir: z.string().default(process.cwd()),
-  // Package selection and description
-  packages: z.array(z.enum(['api', 'ui', 'db'])).optional(),
+  // Package selection and description - derived from PACKAGES
+  packages: z.array(PackageIdEnum()).optional(),
   description: z.string().optional(),
 });
 
@@ -25,7 +22,7 @@ interface AppProps {
   args: Args;
 }
 
-type AppState = 'welcome' | 'setup' | 'generating' | 'success' | 'error';
+type AppState = 'setup' | 'generating' | 'success' | 'error';
 
 interface AppData {
   config?: ProjectConfig;
@@ -41,17 +38,21 @@ export function App({ args }: AppProps) {
   const shouldAutoGenerate = hasAllRequiredFields || isCI;
 
   const cliFeatures: ProjectConfig['features'] | undefined = args.packages
-    ? {
-        api: args.packages.includes('api'),
-        ui: args.packages.includes('ui'),
-        db: args.packages.includes('db'),
-      }
+    ? PACKAGES.reduce(
+        (acc, pkg) => ({
+          ...acc,
+          [pkg.id]: args.packages!.includes(pkg.id),
+        }),
+        {} as Record<string, boolean>
+      )
     : isCI
-    ? {
-        api: true,
-        ui: true,
-        db: false, // Default to no db in CI
-      }
+    ? PACKAGES.reduce(
+        (acc, pkg) => ({
+          ...acc,
+          [pkg.id]: pkg.id !== 'db', // Default to no db in CI
+        }),
+        {} as Record<string, boolean>
+      )
     : undefined;
 
   const autoConfig: ProjectConfig | undefined = shouldAutoGenerate
@@ -64,21 +65,9 @@ export function App({ args }: AppProps) {
     : undefined;
 
   const [state, setState] = useState<AppState>(
-    shouldAutoGenerate ? 'generating' : args.skipHeader ? 'setup' : 'welcome'
+    shouldAutoGenerate ? 'generating' : 'setup'
   );
   const [data, setData] = useState<AppData>(() => (autoConfig ? { config: autoConfig } : {}));
-
-  useEffect(() => {
-    if (!shouldAutoGenerate && !args.skipHeader) {
-      // Show welcome screen briefly, then move to setup
-      const timer = setTimeout(() => {
-        setState('setup');
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [shouldAutoGenerate, args.skipHeader]);
 
   const handleConfigSubmit = (config: ProjectConfig) => {
     setData({ ...data, config });
@@ -99,17 +88,6 @@ export function App({ args }: AppProps) {
     setData({});
     setState('setup');
   };
-
-  if (state === 'welcome') {
-    return (
-      <Box flexDirection="column" alignItems="center" justifyContent="center" height={10}>
-        <Gradient name="rainbow">
-          <BigText text="AI Kickstart" font="block" />
-        </Gradient>
-        <Text color="cyan">One-click AI-powered full-stack applications</Text>
-      </Box>
-    );
-  }
 
   if (state === 'setup') {
     return (
