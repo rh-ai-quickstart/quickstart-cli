@@ -1,4 +1,10 @@
 import { ConfigTemplateParams } from './index.js';
+import { CORE_VERSIONS, getPackageManagerVersion } from '../../../../versions.js';
+import {
+  getScriptCommand,
+  runWorkspaceScript,
+  getSetupCommand,
+} from '../../../../utils/package-manager.js';
 
 export const generateRootPackageJson = (params: ConfigTemplateParams): string => {
   const { config } = params;
@@ -6,19 +12,6 @@ export const generateRootPackageJson = (params: ConfigTemplateParams): string =>
   const enabledFeatures = Object.entries(config.features)
     .filter(([_, enabled]) => enabled)
     .map(([featureId, _]) => featureId);
-
-  const getPackageManagerVersion = (packageManager: string): string => {
-    switch (packageManager) {
-      case 'pnpm':
-        return '9.0.0';
-      case 'yarn':
-        return '4.0.0';
-      case 'npm':
-        return '10.0.0';
-      default:
-        return '1.0.0';
-    }
-  };
 
   const packageJson = {
     name: config.name,
@@ -29,14 +22,18 @@ export const generateRootPackageJson = (params: ConfigTemplateParams): string =>
     workspaces: ['packages/*'],
     scripts: {
       postinstall: 'husky',
-      setup: 'pnpm install && pnpm -r --if-present install:deps',
+      setup: getSetupCommand(config.packageManager),
       build: 'turbo build',
       dev: 'turbo dev',
       ...(enabledFeatures.includes('db') && {
-        'db:start': 'pnpm --filter @*/db db:start',
-        'db:stop': 'pnpm --filter @*/db db:stop',
-        'db:upgrade': 'pnpm --filter @*/db upgrade',
-        'db:revision': 'pnpm --filter @*/db revision',
+        'db:start': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'db:start', true),
+        'db:stop': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'db:stop', true),
+        'db:upgrade': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'upgrade', true),
+        'db:revision': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'revision', true),
+        'compose:up': 'podman-compose up -d',
+        'compose:down': 'podman-compose down',
+        'compose:logs': 'podman-compose logs -f',
+        'containers:build': 'podman-compose build',
       }),
       lint: 'turbo lint',
       'lint:fix': 'turbo lint:fix',
@@ -52,18 +49,13 @@ export const generateRootPackageJson = (params: ConfigTemplateParams): string =>
       release: 'semantic-release',
     },
     devDependencies: {
-      turbo: '^2.0.0',
-      '@commitlint/cli': '^19.4.0',
-      '@commitlint/config-conventional': '^19.4.0',
-      husky: '^9.1.6',
-      'lint-staged': '^15.2.10',
-      'semantic-release': '^24.2.7',
+      ...CORE_VERSIONS,
     },
     'lint-staged': {
       ...(enabledFeatures.includes('ui') && {
         'packages/ui/**/*.{js,jsx,ts,tsx,css,md,html,json}': [
-          'cd packages/ui && pnpm prettier --write --',
-          'cd packages/ui && pnpm eslint --max-warnings 0 --',
+          `cd packages/ui && ${getScriptCommand(config.packageManager)} prettier --write --`,
+          `cd packages/ui && ${getScriptCommand(config.packageManager)} eslint --max-warnings 0 --`,
         ],
       }),
       ...(enabledFeatures.includes('api') && {
@@ -73,6 +65,13 @@ export const generateRootPackageJson = (params: ConfigTemplateParams): string =>
         ],
       }),
     },
+    ...(config.packageManager === 'pnpm' && {
+      pnpm: {
+        overrides: {
+          'esbuild': '^0.27.0',
+        },
+      },
+    }),
     packageManager: `${config.packageManager}@${getPackageManagerVersion(config.packageManager)}`,
   };
 

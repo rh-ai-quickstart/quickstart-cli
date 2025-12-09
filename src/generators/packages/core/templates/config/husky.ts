@@ -1,11 +1,14 @@
 import { ConfigTemplateParams } from './index.js';
+import { getScriptCommand } from '../../../../utils/package-manager.js';
 
-export const generateHuskyPreCommitHook = (_params: ConfigTemplateParams): string => {
-  return `pnpm lint-staged
+export const generateHuskyPreCommitHook = (params: ConfigTemplateParams): string => {
+  const scriptCmd = getScriptCommand(params.config.packageManager);
+  return `${scriptCmd} lint-staged
 `;
 };
 
-export const generateHuskyCommitMsgHook = (_params: ConfigTemplateParams): string => {
-  return `pnpm commitlint --edit $1
+export const generateHuskyCommitMsgHook = (params: ConfigTemplateParams): string => {
+  const scriptCmd = getScriptCommand(params.config.packageManager);
+  return `${scriptCmd} commitlint --edit $1
 `;
 };

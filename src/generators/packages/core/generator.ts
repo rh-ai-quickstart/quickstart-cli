@@ -18,6 +18,9 @@ import {
   generateHuskyPreCommitHook,
   generateHuskyCommitMsgHook,
   generatePullRequestTemplate,
+  generateCompose,
+  generateMakefile,
+  generateEnvExample,
 } from './templates/config/index.js';
 
 export class CorePackageGenerator {
@@ -37,6 +40,9 @@ export class CorePackageGenerator {
     await this.generateCommitlint();
     await this.generateHuskyHooks();
     await this.generatePullRequestTemplate();
+    await this.generateCompose();
+    await this.generateMakefile();
+    await this.generateEnvExample();
   }
 
   private async generateRootPackageJson(): Promise<void> {
@@ -92,5 +98,23 @@ export class CorePackageGenerator {
     const prContent = generatePullRequestTemplate(this.templateParams);
     const prPath = path.join(this.outputDir, '.github', 'pull_request_template.md');
     await fs.outputFile(prPath, prContent);
+  }
+
+  private async generateCompose(): Promise<void> {
+    const content = generateCompose(this.templateParams);
+    // Only generate compose.yml if there are containerized services
+    if (content) {
+      await fs.outputFile(path.join(this.outputDir, 'compose.yml'), content);
+    }
+  }
+
+  private async generateMakefile(): Promise<void> {
+    const content = generateMakefile(this.templateParams);
+    await fs.outputFile(path.join(this.outputDir, 'Makefile'), content);
+  }
+
+  private async generateEnvExample(): Promise<void> {
+    const content = generateEnvExample(this.templateParams);
+    await fs.outputFile(path.join(this.outputDir, '.env.example'), content);
   }
 }

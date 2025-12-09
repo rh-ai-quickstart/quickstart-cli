@@ -13,6 +13,7 @@ import { APIPackageGenerator } from './packages/api/generator.js';
 import { DBPackageGenerator } from './packages/db/generator.js';
 import { CorePackageGenerator } from './packages/core/generator.js';
 import { ConfigPackageGenerator } from './packages/config/generator.js';
+import { HelmPackageGenerator } from './packages/helm/generator.js';
 
 const execAsync = promisify(exec);
 
@@ -106,6 +107,17 @@ export class ProjectGenerator {
         await dbGenerator.generate();
       }
 
+      // Generate Helm charts
+      currentStep++;
+      yield {
+        step: 'helm',
+        message: 'Generating Helm charts...',
+        currentStep,
+        totalSteps,
+      };
+      const helmGenerator = new HelmPackageGenerator(this.config, this.outputDir);
+      await helmGenerator.generate();
+
       // Install dependencies (if not skipped)
       if (!this.options.skipDependencies) {
         currentStep++;
@@ -141,7 +153,7 @@ export class ProjectGenerator {
   }
 
   private calculateTotalSteps(): number {
-    let steps = 4; // project dir + root config + config packages + git
+    let steps = 5; // project dir + root config + config packages + helm + git
     if (this.config.features.ui) steps++;
     if (this.config.features.api) steps++;
     if (this.config.features.db) steps++;
@@ -163,9 +175,125 @@ export class ProjectGenerator {
     }
 
     try {
-      await execAsync(`${packageManager} install`, { cwd: this.outputDir });
-    } catch (error) {
-      throw new Error(`Failed to install dependencies with ${packageManager}: ${error}`);
+      await execAsync(`${packageManager} install`, {
+        cwd: this.outputDir,
+        maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
+      });
+    } catch (error: any) {
+      const errorMessage = error?.message || String(error);
+      const stderr = error?.stderr || '';
+      const stdout = error?.stdout || '';
+
+      // Combine all error output for detection
+      const allErrorOutput = `${errorMessage}\n${stderr}\n${stdout}`;
+
+      // Check if this is an esbuild or postinstall script error that might be fixed by cleaning
+      const isPostinstallError =
+        allErrorOutput.includes('postinstall') ||
+        allErrorOutput.includes('esbuild') ||
+        allErrorOutput.includes('ELIFECYCLE') ||
+        (allErrorOutput.includes('Expected') && allErrorOutput.includes('but got'));
+
+      // Try cleaning and retrying for postinstall errors
+      if (isPostinstallError) {
+        try {
+          // Remove node_modules
+          const nodeModulesPath = path.join(this.outputDir, 'node_modules');
+          if (await fs.pathExists(nodeModulesPath)) {
+            await fs.remove(nodeModulesPath);
+          }
+
+          // Remove lockfiles that might cause issues
+          const lockfiles = ['pnpm-lock.yaml', 'package-lock.json', 'yarn.lock'];
+
+          for (const lockfile of lockfiles) {
+            const lockfilePath = path.join(this.outputDir, lockfile);
+            if (await fs.pathExists(lockfilePath)) {
+              await fs.remove(lockfilePath);
+            }
+          }
+
+          // For pnpm, clean the store cache to remove corrupted binaries
+          if (packageManager === 'pnpm') {
+            try {
+              await execAsync('pnpm store prune', {
+                cwd: this.outputDir,
+                maxBuffer: 10 * 1024 * 1024,
+              });
+            } catch {
+              // Ignore store prune errors - it's not critical
+            }
+          }
+
+          // Retry installation
+          await execAsync(`${packageManager} install`, {
+            cwd: this.outputDir,
+            maxBuffer: 10 * 1024 * 1024,
+          });
+          return; // Success on retry
+        } catch (retryError: any) {
+          // If retry also fails, include both errors
+          const retryStderr = retryError?.stderr || '';
+          const retryStdout = retryError?.stdout || '';
+
+          let fullError = `Failed to install dependencies with ${packageManager} (retry after cleanup also failed)`;
+
+          if (stderr) {
+            fullError += `\n\nOriginal error:\n${stderr}`;
+          }
+
+          if (retryStderr) {
+            fullError += `\n\nRetry error:\n${retryStderr}`;
+          }
+
+          if (stdout && !stdout.includes('Progress:')) {
+            fullError += `\n\nOriginal output:\n${stdout}`;
+          }
+
+          if (retryStdout && !retryStdout.includes('Progress:')) {
+            fullError += `\n\nRetry output:\n${retryStdout}`;
+          }
+
+          throw new Error(fullError);
+        }
+      }
+
+      // Build a comprehensive error message for non-retryable errors
+      let fullError = `Failed to install dependencies with ${packageManager}`;
+
+      // Always include error message
+      if (errorMessage) {
+        fullError += `\n\nError: ${errorMessage}`;
+      }
+
+      if (stderr) {
+        fullError += `\n\nStderr:\n${stderr}`;
+      }
+
+      if (stdout) {
+        // Filter out progress lines but keep important output
+        const importantOutput = stdout
+          .split('\n')
+          .filter(
+            (line: string) =>
+              !line.includes('Progress:') &&
+              !line.includes('Packages:') &&
+              !line.includes('Scope:') &&
+              line.trim().length > 0
+          )
+          .join('\n');
+
+        if (importantOutput) {
+          fullError += `\n\nStdout:\n${importantOutput}`;
+        }
+      }
+
+      // If we have no details at all, include the raw error
+      if (!stderr && !stdout && !errorMessage.includes('Failed to install')) {
+        fullError += `\n\nRaw error: ${JSON.stringify(error, null, 2)}`;
+      }
+
+      throw new Error(fullError);
     }
   }
 
@@ -174,7 +302,7 @@ export class ProjectGenerator {
     try {
       await execAsync('git init', { cwd: this.outputDir });
       await execAsync('git add .', { cwd: this.outputDir });
-      await execAsync('git commit -m "Initial commit"', { cwd: this.outputDir });
+      await execAsync('git commit -m "chore: initial commit"', { cwd: this.outputDir });
     } catch (error) {
       console.warn('Could not initialize git repository:', error);
     }
