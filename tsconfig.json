@@ -37,7 +37,7 @@
     "src/generators/**/*",
     "src/types/**/*",
     "src/utils/**/*",
-    "src/ink-cli.tsx"
+    "src/quickstart-cli.tsx"
   ],
   "exclude": [
     "lib",

@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     // Only run integration tests
     include: ['src/__tests__/integration/**/*.test.ts'],
-    exclude: ['node_modules', 'lib', 'my-kickstart'],
+    exclude: ['node_modules', 'lib', 'my-quickstart'],
 
     // Environment
     environment: 'happy-dom',

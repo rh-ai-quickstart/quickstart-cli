@@ -19,7 +19,7 @@ export default defineConfig({
   test: {
     // Test file patterns
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules', 'lib', 'my-kickstart'],
+    exclude: ['node_modules', 'lib', 'my-quickstart'],
 
     // Environment - use happy-dom to leverage Vite's module resolver
     environment: 'happy-dom',

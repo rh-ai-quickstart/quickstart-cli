@@ -1,14 +1,14 @@
 {
-  "name": "@ai-kickstarts/create-app",
+  "name": "@rh-ai-quickstart/cli",
   "version": "1.0.0",
   "description": "Interactive CLI for scaffolding AI-powered full-stack applications",
   "main": "lib/index.js",
   "bin": {
-    "rh-ai-kickstart": "./lib/ink-cli.js"
+    "quickstart": "./lib/quickstart-cli.js"
   },
   "scripts": {
     "build": "shx rm -rf lib && tsc -b",
-    "dev": "ts-node --transpile-only --esm src/ink-cli.tsx",
+    "dev": "ts-node --transpile-only --esm src/quickstart-cli.tsx",
     "prepack": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TheiaSurette/boilerplate.git"
+    "url": "git+https://github.com/TheiaSurette/quickstart-cli.git"
   },
   "keywords": [
     "cli",
@@ -26,15 +26,15 @@
     "react",
     "fastapi",
     "ai",
-    "boilerplate"
+    "quickstart"
   ],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/TheiaSurette/boilerplate/issues"
+    "url": "https://github.com/TheiaSurette/quickstart-cli/issues"
   },
-  "homepage": "https://github.com/TheiaSurette/boilerplate#readme",
+  "homepage": "https://github.com/TheiaSurette/quickstart-cli#readme",
   "files": [
     "/lib"
   ],

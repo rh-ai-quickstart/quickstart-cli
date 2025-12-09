@@ -7,9 +7,9 @@ export default defineConfig({
   build: {
     target: 'node18',
     lib: {
-      entry: resolve(__dirname, 'src/ink-cli.tsx'),
+      entry: resolve(__dirname, 'src/quickstart-cli.tsx'),
       name: 'cli',
-      fileName: 'ink-cli',
+      fileName: 'quickstart-cli',
       formats: ['es']
     },
     rollupOptions: {
