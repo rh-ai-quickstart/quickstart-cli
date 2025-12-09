@@ -1,7 +1,7 @@
 import { ProjectConfig } from '../../../../types/features.js';
 
 export function generateRuffToml(config: ProjectConfig): string {
-  return `# Shared ruff configuration for Python packages
+  return /* toml */ `# Shared ruff configuration for Python packages
 # Import this in your pyproject.toml with: 
 # [tool.ruff]
 # extend = "../../configs/ruff/pyproject.toml"

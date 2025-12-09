@@ -1,7 +1,7 @@
 import { ProjectConfig } from '../../../../types/features.js';
 
 export function generateESLintConfigCJS(config: ProjectConfig): string {
-  return `const js = require('@eslint/js');
+  return /* javascript */ `const js = require('@eslint/js');
 const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsparser = require('@typescript-eslint/parser');
 const react = require('eslint-plugin-react');
