@@ -43,6 +43,7 @@ export async function cleanupTempDir(tempDir: string): Promise<void> {
 export const DEFAULT_TEST_CONFIG: TestProjectConfig = {
   name: 'test-project',
   description: 'A test project for unit testing',
+  packageManager: 'pnpm',
   features: {
     ui: true,
     api: true,
@@ -223,7 +224,7 @@ export const PROJECT_STRUCTURE = {
     dirs: ['src', 'tests', 'src/core', 'src/routes', 'src/schemas'],
   },
   db: {
-    files: ['package.json', 'pyproject.toml', 'compose.yml', 'alembic.ini', 'README.md'],
+    files: ['package.json', 'pyproject.toml', 'alembic.ini', 'README.md'],
     dirs: ['src', 'tests', 'alembic', 'alembic/versions'],
   },
 };

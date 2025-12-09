@@ -38,7 +38,6 @@ describe('DBPackageGenerator', () => {
         'README.md',
         'package.json',
         'pyproject.toml',
-        'compose.yml',
         'alembic.ini',
         'src/__init__.py',
         'src/db/database.py',
@@ -76,10 +75,11 @@ describe('DBPackageGenerator', () => {
       const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
 
       expect(packageJson.name).toBe(`@${DEFAULT_TEST_CONFIG.name}/db`);
+      const serviceName = `${DEFAULT_TEST_CONFIG.name.toLowerCase().replace(/[\s_-]+/g, '-')}-db`;
       expect(packageJson.scripts).toMatchObject({
-        'db:start': 'docker compose up -d',
-        'db:stop': 'docker compose down',
-        'db:logs': 'docker compose logs -f postgres',
+        'db:start': `podman-compose -f ../../compose.yml up -d ${serviceName}`,
+        'db:stop': `podman-compose -f ../../compose.yml down ${serviceName}`,
+        'db:logs': `podman-compose -f ../../compose.yml logs -f ${serviceName}`,
         upgrade: 'alembic upgrade head',
         downgrade: 'alembic downgrade -1',
         revision: 'alembic revision --autogenerate',
@@ -112,27 +112,11 @@ describe('DBPackageGenerator', () => {
       expect(content).toContain(`description = "Database package for ${DEFAULT_TEST_CONFIG.name}"`);
     });
 
-    it('should generate Docker Compose configuration', async () => {
+    it('should NOT generate compose.yml in db package (moved to root)', async () => {
       await generator.generate();
 
       const composePath = path.join(tempDir, 'packages', 'db', 'compose.yml');
-      await assertFileExists(composePath);
-
-      const content = await fs.readFile(composePath, 'utf-8');
-
-      // Check PostgreSQL configuration
-      expect(content).toContain('image: postgres:16');
-      expect(content).toContain(`POSTGRES_DB: ${DEFAULT_TEST_CONFIG.name}`);
-      expect(content).toContain('POSTGRES_USER: user');
-      expect(content).toContain('POSTGRES_PASSWORD: password');
-      expect(content).toContain('"5432:5432"');
-
-      // Check healthcheck
-      expect(content).toContain('pg_isready');
-      expect(content).toContain(`-d ${DEFAULT_TEST_CONFIG.name}`);
-
-      // Check volume
-      expect(content).toContain('postgres_data');
+      expect(await fs.pathExists(composePath)).toBe(false);
     });
 
     it('should generate database module with correct configuration', async () => {
@@ -290,13 +274,13 @@ describe('DBPackageGenerator', () => {
       // Check title and description
       expect(content).toContain(`# ${DEFAULT_TEST_CONFIG.name} Database`);
       expect(content).toContain(
-        'PostgreSQL database setup with Docker Compose and Alembic migrations'
+        'PostgreSQL database setup with Podman Compose and Alembic migrations'
       );
 
       // Check features section
       expect(content).toContain('## Features');
-      expect(content).toContain('PostgreSQL 15');
-      expect(content).toContain('Docker Compose');
+      expect(content).toContain('PostgreSQL 16');
+      expect(content).toContain('Podman Compose');
       expect(content).toContain('Alembic');
 
       // Check quick start section
@@ -341,10 +325,9 @@ describe('DBPackageGenerator', () => {
         'postgresql+asyncpg://user:password@localhost:5432/my-custom-app'
       );
 
-      // Check Docker Compose database name
+      // Compose file should not exist in db package (moved to root)
       const composePath = path.join(tempDir, 'packages', 'db', 'compose.yml');
-      const composeContent = await fs.readFile(composePath, 'utf-8');
-      expect(composeContent).toContain('POSTGRES_DB: my-custom-app');
+      expect(await fs.pathExists(composePath)).toBe(false);
 
       // Check Alembic configuration
       const alembicPath = path.join(tempDir, 'packages', 'db', 'alembic.ini');

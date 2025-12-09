@@ -34,6 +34,16 @@ describe('Generator Type Checking', () => {
 
   describe('UI Package Type Checking', () => {
     it('should generate TypeScript files that pass tsc type checking', async () => {
+      // Generate required packages first (core and config) since UI depends on workspace packages
+      const { CorePackageGenerator } = await import('../../generators/packages/core/generator.js');
+      const { ConfigPackageGenerator } = await import('../../generators/packages/config/generator.js');
+      
+      const coreGenerator = new CorePackageGenerator(tempDir, DEFAULT_TEST_CONFIG);
+      await coreGenerator.generate();
+      
+      const configGenerator = new ConfigPackageGenerator(tempDir, DEFAULT_TEST_CONFIG);
+      await configGenerator.generate();
+      
       // Generate UI package
       const generator = new UIPackageGenerator(tempDir, DEFAULT_TEST_CONFIG);
       await generator.generate();
@@ -45,16 +55,18 @@ describe('Generator Type Checking', () => {
       await assertFileExists(path.join(uiDir, 'tsconfig.json'));
       await assertFileExists(path.join(uiDir, 'package.json'));
 
-      // Install dependencies (required for type checking)
+      // Install dependencies from root (required for workspace dependencies)
       console.log('Installing UI dependencies for type checking...');
       try {
-        execSync('pnpm install', {
-          cwd: uiDir,
+        // Skip husky install in test environment
+        execSync('pnpm install --ignore-scripts', {
+          cwd: tempDir,
           stdio: 'pipe',
-          timeout: 120000,
+          timeout: 180000, // Increased timeout for large dependency installs
         });
-      } catch (error) {
-        throw new Error(`Failed to install UI dependencies: ${error}`);
+      } catch (error: any) {
+        const errorMessage = error.stdout?.toString() || error.stderr?.toString() || error.message;
+        throw new Error(`Failed to install UI dependencies: ${errorMessage}`);
       }
 
       // Run TypeScript compiler type checking
@@ -189,6 +201,17 @@ describe('Generator Type Checking', () => {
         ...DEFAULT_TEST_CONFIG,
         features: { ...DEFAULT_TEST_CONFIG.features, api: true },
       };
+      
+      // Generate required packages first
+      const { CorePackageGenerator } = await import('../../generators/packages/core/generator.js');
+      const { ConfigPackageGenerator } = await import('../../generators/packages/config/generator.js');
+      
+      const coreGenerator = new CorePackageGenerator(tempDir, configWithApi);
+      await coreGenerator.generate();
+      
+      const configGenerator = new ConfigPackageGenerator(tempDir, configWithApi);
+      await configGenerator.generate();
+      
       const generator = new UIPackageGenerator(tempDir, configWithApi);
       await generator.generate();
 
@@ -198,8 +221,9 @@ describe('Generator Type Checking', () => {
       await assertFileExists(path.join(uiDir, 'src', 'services', 'health.ts'));
       await assertFileExists(path.join(uiDir, 'src', 'hooks', 'health.ts'));
 
-      // Install and type check
-      execSync('pnpm install', { cwd: uiDir, stdio: 'pipe', timeout: 120000 });
+      // Install and type check (install from root for workspace dependencies)
+      // Skip husky install in test environment
+      execSync('pnpm install --ignore-scripts', { cwd: tempDir, stdio: 'pipe', timeout: 180000 });
 
       try {
         execSync('pnpm type-check', {

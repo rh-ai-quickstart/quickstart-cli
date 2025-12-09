@@ -14,12 +14,7 @@ export interface FeatureCategory {
 
 export type PackageManager = 'pnpm' | 'yarn' | 'npm';
 
-export interface ProjectConfig {
-  name: string;
-  description?: string;
-  packageManager: PackageManager;
-  features: Record<string, boolean>;
-}
+import { z } from 'zod';
 
 // Available packages for user selection
 export const PACKAGES: Feature[] = [
@@ -45,3 +40,22 @@ export const PACKAGES: Feature[] = [
     files: ['packages/db/**/*', 'docker/postgres/**/*'],
   },
 ];
+
+// Package ID type - union of all package IDs
+export type PackageId = (typeof PACKAGES)[number]['id'];
+
+// Helper to get all package IDs as a tuple for zod enum
+const getPackageIds = () => PACKAGES.map((pkg) => pkg.id) as [PackageId, ...PackageId[]];
+
+// Zod enum for package IDs - derived from PACKAGES
+export const PackageIdEnum = () => {
+  const ids = getPackageIds();
+  return z.enum(ids);
+};
+
+export interface ProjectConfig {
+  name: string;
+  description?: string;
+  packageManager: PackageManager;
+  features: Record<string, boolean>;
+}
