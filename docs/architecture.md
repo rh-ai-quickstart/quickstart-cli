@@ -1,6 +1,6 @@
 # 🏗️ Architecture Guide
 
-This document explains the internal architecture of the AI Kickstart CLI tool.
+This document explains the internal architecture of the AI QuickStart CLI tool.
 
 ## 📋 Table of Contents
 
@@ -34,7 +34,6 @@ User Interface (Ink React) → Command Parser → Project Generator → Package 
 src/
 ├── commands/           # CLI command definitions
 │   ├── create.tsx     # Main project creation command
-│   ├── add-package.tsx
 │   └── registry.ts    # Command registration
 │
 ├── components/         # Ink React UI components

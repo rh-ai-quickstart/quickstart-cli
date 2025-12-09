@@ -1,6 +1,6 @@
 # 🧪 Testing Guide
 
-This document explains the comprehensive testing strategy for the AI Kickstart CLI.
+This document explains the comprehensive testing strategy for the AI QuickStart CLI.
 
 ## 📋 Table of Contents
 

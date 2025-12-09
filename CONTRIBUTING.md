@@ -1,6 +1,6 @@
 # 🤝 Contributing Guide
 
-Thank you for your interest in contributing to AI Kickstart CLI! This guide will help you get started.
+Thank you for your interest in contributing to AI QuickStart CLI! This guide will help you get started.
 
 ## 📋 Table of Contents
 
@@ -25,8 +25,8 @@ Thank you for your interest in contributing to AI Kickstart CLI! This guide will
 
 ```bash
 # 1. Fork and clone the repository
-git clone https://github.com/your-username/boilerplate.git
-cd boilerplate/cli
+git clone https://github.com/your-username/quickstart-cli.git
+cd quickstart-cli
 
 # 2. Install dependencies
 pnpm install
@@ -69,14 +69,14 @@ cli/
 │
 ├── docs/                  # Documentation
 ├── lib/                   # Built JavaScript (generated)
-└── my-kickstart/          # Test project (generated)
+└── my-quickstart/          # Test project (generated)
 ```
 
 ## Contributing Workflow
 
 ### 1. Pick an Issue
 
-- Check [existing issues](https://github.com/your-org/repo/issues)
+- Check [existing issues](https://github.com/TheiaSurette/quickstart-cli/issues)
 - Look for `good first issue` or `help wanted` labels
 - Comment on the issue to claim it
 
@@ -109,7 +109,7 @@ pnpm test:e2e           # End-to-end tests
 
 # Manual testing
 pnpm build
-node lib/ink-cli.js create test-project --all-features
+node lib/quickstart-cli.js create test-project --all-features
 ```
 
 ### 5. Submit Pull Request
@@ -484,9 +484,9 @@ echo "Example usage" > examples/your-feature/README.md
 
 ## Getting Help
 
-- **Questions** → [GitHub Discussions](https://github.com/your-org/repo/discussions)
-- **Bug Reports** → [GitHub Issues](https://github.com/your-org/repo/issues)
-- **Feature Requests** → [GitHub Issues](https://github.com/your-org/repo/issues)
+- **Questions** → [GitHub Discussions](https://github.com/TheiaSurette/quickstart-cli/discussions)
+- **Bug Reports** → [GitHub Issues](https://github.com/TheiaSurette/quickstart-cli/issues)
+- **Feature Requests** → [GitHub Issues](https://github.com/TheiaSurette/quickstart-cli/issues)
 - **Documentation** → [docs/](./docs/) folder
 
 ## Code Review Process
