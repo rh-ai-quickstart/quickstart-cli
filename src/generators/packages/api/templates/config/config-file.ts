@@ -8,7 +8,7 @@ export const generateConfigFile = (params: SourceTemplateParams): string => {
     `
     : '';
 
-  return `"""
+  return /* python */ `"""
 Application configuration
 """
 

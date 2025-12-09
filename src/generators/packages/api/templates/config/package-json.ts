@@ -6,6 +6,10 @@ export const generatePackageJson = (params: ConfigTemplateParams): string => {
     ? 'uv sync && uv pip install -e ../db'
     : 'uv sync';
 
+  // Note: Database container is managed by the DB package, not here
+  // The API just runs - it assumes the DB package will start the database
+  const devScript = 'uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000';
+
   return JSON.stringify(
     {
       name: `@${config.name}/api`,
@@ -14,7 +18,7 @@ export const generatePackageJson = (params: ConfigTemplateParams): string => {
       description: 'FastAPI backend application',
       scripts: {
         'install:deps': installDepsScript,
-        dev: 'uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000',
+        dev: devScript,
         start: 'uv run uvicorn src.main:app --host 0.0.0.0 --port 8000',
         test: 'uv run pytest',
         lint: 'uv run ruff check .',

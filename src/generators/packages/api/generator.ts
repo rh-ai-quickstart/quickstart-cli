@@ -21,6 +21,7 @@ import { generateConfigFile } from './templates/config/config-file.js';
 import { generateHealthRoute } from './templates/routes/index.js';
 import { generateHealthSchema } from './templates/schemas/index.js';
 import { generateHealthTests, TestTemplateParams } from './templates/tests/index.js';
+import { generateContainerfile } from './templates/containerfile.js';
 
 export class APIPackageGenerator {
   private packageDir: string;
@@ -66,6 +67,7 @@ export class APIPackageGenerator {
       'README.md': generateReadme(this.templateParams),
       'package.json': generatePackageJson(this.templateParams),
       'pyproject.toml': generatePyprojectToml(this.templateParams),
+      'Containerfile': generateContainerfile(this.templateParams),
     };
 
     for (const [filename, content] of Object.entries(files)) {

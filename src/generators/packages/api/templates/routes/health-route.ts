@@ -56,7 +56,7 @@ except Exception:
     
     return [api_response]`;
 
-  return `"""
+  return /* python */ `"""
 Health check endpoints
 """
 

@@ -1,5 +1,5 @@
 export const generateHealthSchema = (): string => {
-  return `"""
+  return /* python */ `"""
 Health check schemas
 """
 

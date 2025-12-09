@@ -52,7 +52,7 @@ def test_health_check_api_only():
     assert api_service["message"] == "API is running"
     assert api_service["version"] == "0.0.0"`;
 
-  return `"""
+  return /* python */ `"""
 Health endpoint tests
 """
 
