@@ -1,4 +1,4 @@
-export const generateHealthSchema = (): string => `
+export const generateHealthSchema = (): string => /* typescript */ `
 import { z } from 'zod';
 
 export const ServiceSchema = z.object({

@@ -9,6 +9,8 @@ import {
   generateDropdownMenuStory,
   generateFooterComponent,
   generateFooterStory,
+  generateHeaderComponent,
+  generateHeaderStory,
   generateHeroComponent,
   generateHeroStory,
   generateLogoComponent,
@@ -147,6 +149,13 @@ export const components: ComponentDefinition[] = [
     generator: generateFooterComponent,
     passParams: true,
     story: { generator: generateFooterStory },
+  },
+  {
+    dir: 'header',
+    file: 'header',
+    generator: generateHeaderComponent,
+    passParams: true,
+    story: { generator: generateHeaderStory },
   },
   {
     dir: 'theme-provider',

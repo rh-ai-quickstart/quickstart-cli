@@ -32,7 +32,7 @@ export const generateSeparatorStory =
 import { Separator } from './separator';
 
 const meta: Meta<typeof Separator> = {
-  title: 'Components/Separator',
+  title: 'Atoms/Separator',
   component: Separator,
   parameters: {
     layout: 'centered',

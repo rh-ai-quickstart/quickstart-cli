@@ -1,4 +1,4 @@
-export const generateHealthService = (): string => `
+export const generateHealthService = (): string => /* typescript */ `
 import { HealthSchema } from '../schemas/health';
 
 export const getHealth = async (): Promise<HealthSchema> => {

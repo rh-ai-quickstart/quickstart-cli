@@ -1,6 +1,8 @@
 import { ConfigTemplateParams } from '../config/index';
 
-export const generateIndexHtml = (params: ConfigTemplateParams): string => `<!doctype html>
+export const generateIndexHtml = (
+  params: ConfigTemplateParams
+): string => /* html */ `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />

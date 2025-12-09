@@ -6,22 +6,19 @@ export const generateFooterComponent = (params: RouteTemplateParams): string => 
 
 export function Footer() {
   return (
-    <footer className="mt-10">
-      <div className="rounded-2xl border bg-card/60 p-4 text-xs text-muted-foreground backdrop-blur sm:flex sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
+    <footer className="w-full border-t bg-background">
+      <div className="container mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 text-xs text-muted-foreground sm:px-6 lg:px-8">
+        <div className="flex items-center gap-0">
           <Logo />
           <span className="font-medium text-foreground">
-            Built with the <span className="font-bold">AI Kickstart CLI</span>
+            Built with the <span className="font-bold">AI QuickStart CLI</span>
           </span>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-3 sm:mt-0">
-          <a className="hover:underline" href="#">
-            Docs
-          </a>
-          <a className="hover:underline" href="#">
+        <div className="flex items-center gap-3">
+          <span className="text-muted-foreground">·</span>
+          <a className="hover:underline" href="https://github.com/TheiaSurette/quickstart-cli" target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
-
         </div>
       </div>
     </footer>

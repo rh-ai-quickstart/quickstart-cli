@@ -1,4 +1,4 @@
-export const generateGlobalCSS = (): string => `
+export const generateGlobalCSS = (): string => /* css */ `
 @import "tailwindcss";
 @import "tw-animate-css";
 @source "/src/routes/**/*.{ts,tsx}";

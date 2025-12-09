@@ -84,7 +84,7 @@ import { Button } from '../button/button';
 import { Badge } from '../badge/badge';
 
 const meta: Meta<typeof Card> = {
-  title: 'Components/Card',
+  title: 'Atoms/Card',
   component: Card,
   parameters: {
     layout: 'centered',

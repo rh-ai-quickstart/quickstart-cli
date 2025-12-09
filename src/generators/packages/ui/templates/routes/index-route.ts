@@ -2,11 +2,11 @@ import { RouteTemplateParams } from '.';
 
 export const generateIndexRoute = (params: RouteTemplateParams): string => {
   const { features } = params;
-  const serviceIcons = [];
+  const serviceIcons = ['Monitor'];
   if (features.api) serviceIcons.push('Server');
   if (features.db) serviceIcons.push('Database');
 
-  return `import { createFileRoute } from '@tanstack/react-router';
+  return /* tsx */ `import { createFileRoute } from '@tanstack/react-router';
 import { Hero } from '../components/hero/hero';
 import { QuickStats } from '../components/quick-stats/quick-stats';
 import { StatusPanel } from '../components/status-panel/status-panel';
@@ -19,8 +19,19 @@ export const Route = createFileRoute('/' as any)({
 });
 
 function Index() {
+  // Footer is imported for consistency but rendered in root route
+  void Footer;
   const { data: healthData, isLoading } = useHealth();
   const services = [
+    {
+      id: 'ui',
+      name: 'UI',
+      description: 'Frontend application interface.',
+      icon: <Monitor />,
+      status: healthData?.find(s => s.name === 'UI')?.status || 'unknown',
+      region: 'us-east-1',
+      lastCheck: new Date(),
+    },
     ${
       features.api
         ? `{
@@ -51,14 +62,13 @@ function Index() {
   
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <main className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl">
         <Hero />
         <QuickStats services={services} />
         <div className="mt-6">
           <StatusPanel services={services} isLoading={isLoading} />
         </div>
-        <Footer />
-      </main>
+      </div>
     </div>
   );
 }`;

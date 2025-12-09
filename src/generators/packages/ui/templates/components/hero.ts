@@ -2,9 +2,7 @@ import { RouteTemplateParams } from '../routes';
 
 export const generateHeroComponent = (params: RouteTemplateParams): string => {
   const { config } = params;
-  return `import { Badge } from "../atoms/badge/badge";
-
-export function Hero() {
+  return `export function Hero() {
   return (
     <section className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
       <div
@@ -20,20 +18,9 @@ export function Hero() {
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           ${
             config.description ||
-            'A modern full-stack application with real-time health monitoring and elegant UI components.'
+            'A comprehensive template has been generated to get your QuickStart up and running right away!'
           }
         </p>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">
-            Dark mode ready
-          </Badge>
-          <Badge variant="secondary">
-            Accessible
-          </Badge>
-          <Badge variant="secondary">
-            Production-grade UI
-          </Badge>
-        </div>
       </div>
     </section>
   );

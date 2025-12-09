@@ -1,4 +1,4 @@
-export const generateMainTsx = (): string => `import React from 'react'
+export const generateMainTsx = (): string => /* tsx */ `import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'

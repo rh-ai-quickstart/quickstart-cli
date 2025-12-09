@@ -4,7 +4,7 @@ export const generateViteConfig = (params: ConfigTemplateParams): string => {
   const { config } = params;
   const hasApi = config.features.api;
 
-  return `import { defineConfig } from "vite";
+  return /* typescript */ `import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from '@tailwindcss/vite';
 import path from "path";
@@ -17,19 +17,20 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },${
-    hasApi
-      ? `
+  },
   server: {
+    port: 3000${
+      hasApi
+        ? `,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\\/api/, '')
       }
-    },
-  },`
-      : ''
-  }
+    }`
+        : ''
+    }
+  },
 });`;
 };

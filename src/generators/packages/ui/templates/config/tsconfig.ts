@@ -1,4 +1,4 @@
-export const generateTSConfig = (): string => `{
+export const generateTSConfig = (): string => /* json */ `{
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -27,7 +27,7 @@ export const generateTSConfig = (): string => `{
   "references": [{ "path": "./tsconfig.node.json" }]
 }`;
 
-export const generateTSConfigNode = (): string => `{
+export const generateTSConfigNode = (): string => /* json */ `{
   "compilerOptions": {
     "composite": true,
     "skipLibCheck": true,
