@@ -6,29 +6,28 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ProjectConfig } from '../../../types/features.js';
+import { ConfigTemplateParams } from '../../../types/config.js';
+
 import {
   generateChartYaml,
   generateValuesYaml,
   generateHelpersTpl,
   generateDeploymentApi,
   generateDeploymentUi,
-  generateDeploymentDb,
   generateServiceApi,
   generateServiceUi,
-  generateServiceDb,
   generateRoutes,
   generateSecret,
   generateServiceAccount,
   generateMigrationJob,
-  generateDatabasePvc,
   generateHelmignore,
-  HelmTemplateParams,
 } from './templates/index.js';
 
 export class HelmPackageGenerator {
   private helmDir: string;
   private templatesDir: string;
-  private templateParams: HelmTemplateParams;
+  private templateParams: ConfigTemplateParams;
+
 
   constructor(config: ProjectConfig, outputDir: string) {
     this.helmDir = path.join(outputDir, 'deploy', 'helm', config.name);
@@ -93,10 +92,9 @@ export class HelmPackageGenerator {
     }
 
     // Generate DB resources if enabled
+    // Note: Database deployment is handled by pgvector subchart (see Chart.yaml dependencies)
+    // We only generate the migration job here
     if (features.db) {
-      files['database-deployment.yaml'] = generateDeploymentDb(this.templateParams);
-      files['database-service.yaml'] = generateServiceDb(this.templateParams);
-      files['database-pvc.yaml'] = generateDatabasePvc(this.templateParams);
       files['migration-job.yaml'] = generateMigrationJob(this.templateParams);
     }
 
@@ -105,4 +103,3 @@ export class HelmPackageGenerator {
     }
   }
 }
-

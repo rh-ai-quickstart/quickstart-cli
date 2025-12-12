@@ -18,4 +18,7 @@ export declare class CorePackageGenerator {
     private generateCommitlint;
     private generateHuskyHooks;
     private generatePullRequestTemplate;
+    private generateCompose;
+    private generateMakefile;
+    private generateEnvExample;
 }

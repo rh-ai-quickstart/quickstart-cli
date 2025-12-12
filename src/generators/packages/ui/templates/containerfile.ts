@@ -65,15 +65,27 @@ RUN echo 'server { \\
     } \\
 }' > /etc/nginx/conf.d/default.conf
 
-# Set ownership
+# Set ownership (OpenShift will override user ID, but we set it for consistency)
 RUN chown -R appuser:appuser /usr/share/nginx/html && \\
-    chown -R appuser:appuser /var/cache/nginx && \\
     chown -R appuser:appuser /var/log/nginx && \\
     chown -R appuser:appuser /etc/nginx/conf.d
 
-# Create nginx pid directory
-RUN mkdir -p /var/run/nginx && \\
-    chown -R appuser:appuser /var/run/nginx
+# Create nginx pid directory and cache directories with proper permissions
+# Use world-writable permissions since OpenShift assigns random user IDs
+RUN mkdir -p /var/run/nginx && \\ # make sure the directory exists
+    mkdir -p /var/cache/nginx/client_temp && \\ # make sure the directory exists
+    mkdir -p /var/cache/nginx/proxy_temp && \\ # make sure the directory exists
+    mkdir -p /var/cache/nginx/fastcgi_temp && \\ # make sdsssssd∂∂∂∂∂∂∂∂∂ƒsure the directory exists
+    mkdir -p /var/cache/nginx/uwsgi_temp && \\ # make sure the directory exists
+    mkdir -p /var/cache/nginx/scgi_temp && \\ # make sure the directory exists
+    chmod -R 777 /var/run/nginx && \\ # make sure the directory is writable
+    chmod -R 777 /var/cache/nginx && \\ # make sure the directory is writable
+
+# Update nginx config to use non-standard ports and user
+# Remove pid directive from nginx.conf since we'll specify it in CMD
+RUN sed -i 's/listen       80;/listen       8080;/' /etc/nginx/nginx.conf && \\
+    sed -i 's/user  nginx;/# user  nginx;/' /etc/nginx/nginx.conf && \\
+    sed -i '/^pid /d' /etc/nginx/nginx.conf
 
 # Switch to non-root user
 USER appuser
@@ -85,8 +97,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \\
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 
-# Run nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Run nginx with custom pid file path (specified in CMD to avoid duplicate directive)
+CMD ["nginx", "-g", "daemon off; pid /var/run/nginx/nginx.pid;"]
 `;
 }
 

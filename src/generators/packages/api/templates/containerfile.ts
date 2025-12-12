@@ -49,6 +49,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application source
 COPY packages/api/src/ ./packages/api/src/
 COPY packages/api/pyproject.toml ./packages/api/
+# Note: DB package is not copied here - migrations use dedicated migration image
 
 # Set working directory to API package
 WORKDIR /app/packages/api

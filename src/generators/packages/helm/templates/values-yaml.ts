@@ -25,10 +25,10 @@ export function generateValuesYaml(params: HelmTemplateParams): string {
   if (hasApi) {
     secrets.push('  # API secrets');
     if (hasDb) {
-      secrets.push('  DATABASE_URL: "postgresql+asyncpg://user:changeme@' + chartName + '-db:5432/' + chartName + '"');
+      secrets.push('  DATABASE_URL: "postgresql+asyncpg://user:changeme@pgvector:5432/' + chartName + '"');
     }
     secrets.push('  DEBUG: "false"');
-    secrets.push('  ALLOWED_HOSTS: \'["*"]\'');
+    secrets.push('  ALLOWED_HOSTS: "*"');
     secrets.push('');
   }
   
@@ -90,16 +90,16 @@ ui:
     periodSeconds: 10
 ` : '';
   
-  const dbSection = hasDb ? `# Database configuration
-database:
+  const dbSection = hasDb ? `# Database configuration - using pgvector subchart from ai-architecture-charts
+# The pgvector subchart handles PostgreSQL deployment, service, and persistence
+pgvector:
   enabled: true
-  name: ${chartName}-db
-  image:
-    repository: pgvector/pgvector
-    tag: pg16
-  service:
-    type: ClusterIP
-    port: 5432
+  secret:
+    host: pgvector  # Database hostname (pgvector subchart creates service named "pgvector")
+    port: "5432"
+    user: user
+    password: changeme  # Change in production!
+    dbname: ${chartName}
   persistence:
     enabled: true
     size: 10Gi
