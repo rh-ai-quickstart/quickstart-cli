@@ -53,7 +53,7 @@ jobs:
 
     - name: Run integration tests
       working-directory: .
-      run: pnpm test:integration
+      run: pnpm test:coverage
       env:
         # Ensure tests have enough time in CI
         VITEST_TIMEOUT: 300000
