@@ -75,7 +75,7 @@ RUN chown -R appuser:appuser /usr/share/nginx/html && \\
 RUN mkdir -p /var/run/nginx && \\ # make sure the directory exists
     mkdir -p /var/cache/nginx/client_temp && \\ # make sure the directory exists
     mkdir -p /var/cache/nginx/proxy_temp && \\ # make sure the directory exists
-    mkdir -p /var/cache/nginx/fastcgi_temp && \\ # make sdsssssd∂∂∂∂∂∂∂∂∂ƒsure the directory exists
+    mkdir -p /var/cache/nginx/fastcgi_temp && \\ # make sure the directory exists
     mkdir -p /var/cache/nginx/uwsgi_temp && \\ # make sure the directory exists
     mkdir -p /var/cache/nginx/scgi_temp && \\ # make sure the directory exists
     chmod -R 777 /var/run/nginx && \\ # make sure the directory is writable

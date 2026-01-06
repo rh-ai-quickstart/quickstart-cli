@@ -6,9 +6,9 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ProjectConfig } from '../../../types/features.js';
-import { ConfigTemplateParams } from '../../../types/config.js';
 
 import {
+  HelmTemplateParams,
   generateChartYaml,
   generateValuesYaml,
   generateHelpersTpl,
@@ -26,7 +26,7 @@ import {
 export class HelmPackageGenerator {
   private helmDir: string;
   private templatesDir: string;
-  private templateParams: ConfigTemplateParams;
+  private templateParams: HelmTemplateParams;
 
 
   constructor(config: ProjectConfig, outputDir: string) {
