@@ -58,12 +58,18 @@ ${hasDb ? `	@echo "  db-start            Start the database container"
 	@echo "  push-images         Push images to OpenShift registry"` : ''}
 	@echo "  deploy             Deploy application using Helm"
 	@echo "  deploy-dev          Deploy in development mode"
+	@echo "  watch-status        Watch deployment status in real-time (run in separate terminal)"
 	@echo "  undeploy            Remove application deployment"
 	@echo "  status              Show deployment status"
 	@echo "  debug               Show detailed diagnostics for failed deployments"
 	@echo "  helm-lint           Lint Helm chart"
 	@echo "  helm-template       Render Helm templates"
 	@echo "  clean              Remove build artifacts and dependencies"
+	@echo ""
+	@echo "Deployment Tips:"
+	@echo "  - Run 'make watch-status' in another terminal to monitor deployment progress"
+	@echo "  - Use 'make status' to check current deployment state"
+	@echo "  - Use 'make debug' if deployment fails for detailed diagnostics"
 	@echo ""
 	@echo "Run 'make <target>' to execute a target"`);
 
@@ -138,11 +144,15 @@ ${hasDb ? `	@echo "  db-start            Start the database container"
     const buildImageCommands: string[] = [];
     if (hasApi) {
       buildImageCommands.push(`\t@echo "Building API image..."
-\t@podman build -f packages/api/Containerfile -t ${projectName}-api:$(IMAGE_TAG) .`);
+\t@podman build --platform linux/amd64 -f packages/api/Containerfile -t ${projectName}-api:$(IMAGE_TAG) .`);
     }
     if (hasUi) {
       buildImageCommands.push(`\t@echo "Building UI image..."
-\t@podman build -f packages/ui/Containerfile -t ${projectName}-ui:$(IMAGE_TAG) .`);
+\t@podman build --platform linux/amd64 -f packages/ui/Containerfile -t ${projectName}-ui:$(IMAGE_TAG) .`);
+    }
+    if (hasDb) {
+      buildImageCommands.push(`\t@echo "Building migration image..."
+\t@podman build --platform linux/amd64 -f packages/db/Containerfile -t ${projectName}-db:$(IMAGE_TAG) .`);
     }
 
     targets.push(`build-images:
@@ -171,6 +181,11 @@ ${buildImageCommands.join('\n')}
       pushImageParts.push(`podman tag ${projectName}-ui:$(IMAGE_TAG) $$REGISTRY_URL/$(NAMESPACE)/${projectName}-ui:$(IMAGE_TAG)`);
       pushImageParts.push(`if ! podman push $$REGISTRY_URL/$(NAMESPACE)/${projectName}-ui:$(IMAGE_TAG); then echo ""; echo "❌ Failed to push UI image. Common solutions:"; echo "  1. Ensure you have push permissions: oc policy add-role-to-user system:image-builder $$(oc whoami) -n $(NAMESPACE)"; echo "  2. Check if namespace exists: oc get project $(NAMESPACE)"; echo "  3. Try creating the project: oc new-project $(NAMESPACE)"; exit 1; fi`);
     }
+    if (hasDb) {
+      pushImageParts.push(`echo "Tagging and pushing migration image..."`);
+      pushImageParts.push(`podman tag ${projectName}-db:$(IMAGE_TAG) $$REGISTRY_URL/$(NAMESPACE)/${projectName}-db:$(IMAGE_TAG)`);
+      pushImageParts.push(`if ! podman push $$REGISTRY_URL/$(NAMESPACE)/${projectName}-db:$(IMAGE_TAG); then echo ""; echo "❌ Failed to push migration image. Common solutions:"; echo "  1. Ensure you have push permissions: oc policy add-role-to-user system:image-builder $$(oc whoami) -n $(NAMESPACE)"; echo "  2. Check if namespace exists: oc get project $(NAMESPACE)"; echo "  3. Try creating the project: oc new-project $(NAMESPACE)"; exit 1; fi`);
+    }
 
     pushImageParts.push(`echo "✅ Images pushed successfully"`);
 
@@ -182,6 +197,9 @@ ${buildImageCommands.join('\n')}
     }
     if (hasUi) {
       imageCheckParts.push(`if ! podman image exists ${projectName}-ui:$(IMAGE_TAG); then echo "UI image not found"; NEED_BUILD=true; fi`);
+    }
+    if (hasDb) {
+      imageCheckParts.push(`if ! podman image exists ${projectName}-db:$(IMAGE_TAG); then echo "Migration image not found"; NEED_BUILD=true; fi`);
     }
     imageCheckParts.push(`if [ "$$NEED_BUILD" = "true" ]; then echo "Building missing images..."; $(MAKE) build-images; fi`);
     
@@ -198,6 +216,10 @@ ${buildImageCommands.join('\n')}
     helmSecretParams.push('--set secrets.POSTGRES_DB="$$POSTGRES_DB"');
     helmSecretParams.push('--set secrets.POSTGRES_USER="$$POSTGRES_USER"');
     helmSecretParams.push('--set secrets.POSTGRES_PASSWORD="$$POSTGRES_PASSWORD"');
+    // Pass secrets to pgvector subchart as well
+    helmSecretParams.push('--set pgvector.secret.password="$$POSTGRES_PASSWORD"');
+    helmSecretParams.push('--set pgvector.secret.user="$$POSTGRES_USER"');
+    helmSecretParams.push('--set pgvector.secret.dbname="$$POSTGRES_DB"');
     if (hasApi) {
       helmSecretParams.push('--set secrets.DATABASE_URL="$$DATABASE_URL"');
     }
@@ -235,8 +257,35 @@ endef
 
 # Create OpenShift project/namespace if it doesn't exist
 create-project:
-	@echo "Creating OpenShift project: $(NAMESPACE)"
-	@oc new-project $(NAMESPACE) || echo "Project $(NAMESPACE) already exists"
+	@echo "Checking if project $(NAMESPACE) exists..."
+	@if oc get project $(NAMESPACE) >/dev/null 2>&1; then \
+		echo "⚠️  Project '$(NAMESPACE)' already exists!"; \
+		echo ""; \
+		if [ -z "$$SKIP_PROJECT_CHECK" ]; then \
+			echo "This project may belong to another user or deployment."; \
+			echo "Do you want to continue deploying to this existing project? (y/N)"; \
+			read -r response; \
+			if [ "$$response" != "y" ] && [ "$$response" != "Y" ]; then \
+				echo "Deployment cancelled."; \
+				exit 1; \
+			fi; \
+		else \
+			echo "⚠️  Skipping confirmation (SKIP_PROJECT_CHECK is set)"; \
+		fi; \
+		echo "Using existing project: $(NAMESPACE)"; \
+	else \
+		echo "Creating new project: $(NAMESPACE)"; \
+		oc new-project $(NAMESPACE) || exit 1; \
+	fi
+
+# Check and fix stuck Helm releases
+check-helm-release:
+	@echo "Checking Helm release status..."
+	@if helm status $(PROJECT_NAME) --namespace $(NAMESPACE) 2>/dev/null | grep -q "pending-upgrade"; then \
+		echo "⚠️  Helm release is stuck in 'pending-upgrade' state. Rolling back..."; \
+		helm rollback $(PROJECT_NAME) --namespace $(NAMESPACE) || echo "Rollback failed or not needed"; \
+		sleep 2; \
+	fi || echo "Release check complete"
 
 # Update Helm chart dependencies
 helm-dep-update:
@@ -244,9 +293,31 @@ helm-dep-update:
 	@helm dependency update ./deploy/helm/$(PROJECT_NAME) || echo "No dependencies to update"
 	@echo "✅ Helm dependencies updated successfully"
 
-# Deploy application
-deploy: create-project ${hasContainerizedPackages ? 'push-images ' : ''}helm-dep-update
-	@echo "Deploying application using Helm..."
+# Watch deployment status in real-time (run in separate terminal: make watch-status)
+watch-status:
+	@echo "Watching deployment status (Ctrl+C to stop)..."
+	@watch -n 3 -t bash -c " \
+		echo '=== '$$(date)' ==='; \
+		echo ''; \
+		echo '=== Pod Status ==='; \
+		oc get pods -n $(NAMESPACE) 2>/dev/null || kubectl get pods -n $(NAMESPACE) 2>/dev/null || echo 'Cannot access pods'; \
+		echo ''; ${
+      hasDb
+        ? `\
+		echo '=== Migration Job ==='; \
+		oc get jobs -n $(NAMESPACE) -l app.kubernetes.io/component=migration 2>/dev/null || kubectl get jobs -n $(NAMESPACE) -l app.kubernetes.io/component=migration 2>/dev/null || echo 'No migration jobs'; \
+		echo ''; `
+        : ''
+    }\
+		echo '=== Recent Events (last 5) ==='; \
+		oc get events -n $(NAMESPACE) --sort-by='.lastTimestamp' --tail=5 2>/dev/null || kubectl get events -n $(NAMESPACE) --sort-by='.lastTimestamp' --tail=5 2>/dev/null || echo 'Cannot access events'"
+
+# Deploy application with progress monitoring
+deploy: create-project check-helm-release ${hasContainerizedPackages ? 'build-images push-images ' : ''}helm-dep-update
+	@echo "🚀 Deploying application using Helm..."
+	@echo ""
+	@echo "💡 Tip: Open another terminal and run 'make watch-status' to monitor progress in real-time"
+	@echo ""
 	@if [ -f "$(ENV_FILE)" ]; then \
 		set -a; source $(ENV_FILE); set +a; \
 	fi; \
@@ -261,6 +332,7 @@ deploy: create-project ${hasContainerizedPackages ? 'push-images ' : ''}helm-dep
 	if echo "$$REGISTRY_URL" | grep -q "\\.svc:"; then \
 		REGISTRY_URL=$$(oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}' 2>/dev/null || echo "$$REGISTRY_URL"); \
 	fi; \
+	echo "📦 Installing/upgrading Helm release..." && \
 	helm upgrade --install $(PROJECT_NAME) ./deploy/helm/$(PROJECT_NAME) \\
 		--namespace $(NAMESPACE) \\
 		--timeout $(HELM_TIMEOUT) \\
@@ -271,10 +343,15 @@ deploy: create-project ${hasContainerizedPackages ? 'push-images ' : ''}helm-dep
 		--set global.imageTag=$(IMAGE_TAG) \\
 		--set routes.sharedHost="$(PROJECT_NAME)-$(NAMESPACE).$(CLUSTER_DOMAIN)" \\
 		$(HELM_SECRET_PARAMS) \\
-		$(HELM_EXTRA_ARGS) || (echo ""; echo "❌ Helm deployment failed!"; echo ""; echo "Run 'make debug' for detailed diagnostics or 'make status' for quick status check."; echo ""; $(MAKE) debug; exit 1)
+		$(HELM_EXTRA_ARGS) && \
+	echo "" && \
+	echo "✅ Deployment completed successfully!" && \
+	echo "" && \
+	echo "📊 Current status:" && \
+	$(MAKE) status || (echo ""; echo "❌ Helm deployment failed!"; echo ""; echo "Run 'make debug' for detailed diagnostics or 'make status' for quick status check."; echo ""; $(MAKE) debug; exit 1)
 
 # Deploy in development mode
-deploy-dev: create-project ${hasContainerizedPackages ? 'push-images ' : ''}helm-dep-update
+deploy-dev: create-project check-helm-release ${hasContainerizedPackages ? 'build-images push-images ' : ''}helm-dep-update
 	@echo "Deploying application in development mode..."
 	@if [ -f "$(ENV_FILE)" ]; then \
 		set -a; source $(ENV_FILE); set +a; \
@@ -315,10 +392,14 @@ status:
 	@echo ""
 	@echo "=== Services ==="
 	@oc get svc -n $(NAMESPACE) 2>/dev/null || kubectl get svc -n $(NAMESPACE) 2>/dev/null || echo "Cannot access services"
-	@echo ""
-	${hasDb ? `@echo "=== Migration Job Status ==="
+	@echo ""${
+    hasDb
+      ? `
+	@echo "=== Migration Job Status ==="
 	@oc get jobs -n $(NAMESPACE) -l app.kubernetes.io/component=migration 2>/dev/null || kubectl get jobs -n $(NAMESPACE) -l app.kubernetes.io/component=migration 2>/dev/null || echo "No migration jobs found"
-	@echo ""` : ''}
+	@echo ""`
+      : ''
+  }
 	@echo "=== Recent Events ==="
 	@oc get events -n $(NAMESPACE) --sort-by='.lastTimestamp' --tail=20 2>/dev/null || kubectl get events -n $(NAMESPACE) --sort-by='.lastTimestamp' --tail=20 2>/dev/null || echo "Cannot access events"
 
@@ -356,8 +437,10 @@ debug:
 	@echo ""
 	@echo "=== Recent Events ==="
 	@oc get events -n $(NAMESPACE) 2>/dev/null | tail -30 || kubectl get events -n $(NAMESPACE) 2>/dev/null | tail -30 || echo "Cannot access events"
-	@echo ""
-	${hasDb ? `@echo "=== Migration Job Status ==="
+	@echo ""${
+    hasDb
+      ? `
+	@echo "=== Migration Job Status ==="
 	@oc get jobs -n $(NAMESPACE) -l app.kubernetes.io/component=migration 2>/dev/null || kubectl get jobs -n $(NAMESPACE) -l app.kubernetes.io/component=migration 2>/dev/null || echo "No migration jobs found"
 	@echo ""
 	@echo "=== Migration Job Pod Logs ==="
@@ -371,7 +454,9 @@ debug:
 	else \
 		echo "No migration pod found"; \
 	fi
-	@echo ""` : ''}
+	@echo ""`
+      : ''
+  }
 	@echo "=== Image Pull Issues ==="
 	@oc describe pods -n $(NAMESPACE) 2>/dev/null | grep -B 2 -A 10 -i "imagepull\|errimagepull\|imagepullbackoff" || kubectl describe pods -n $(NAMESPACE) 2>/dev/null | grep -B 2 -A 10 -i "imagepull\|errimagepull\|imagepullbackoff" || echo "No image pull errors detected"
 	@echo ""
@@ -380,17 +465,28 @@ debug:
 	@echo "  Check Helm status: helm status $(PROJECT_NAME) -n $(NAMESPACE)"
 	@echo "  View pod logs: oc logs -n $(NAMESPACE) <pod-name>"
 	@echo "  Describe pod: oc describe pod -n $(NAMESPACE) <pod-name>"
-	@echo "  Check events: oc get events -n $(NAMESPACE) --sort-by='.lastTimestamp'"
-	${hasDb ? `@echo "  Migration logs: oc logs -n $(NAMESPACE) -l app.kubernetes.io/component=migration"` : ''}
+	@echo "  Check events: oc get events -n $(NAMESPACE) --sort-by='.lastTimestamp'"${
+    hasDb
+      ? `
+	@echo "  Migration logs: oc logs -n $(NAMESPACE) -l app.kubernetes.io/component=migration"`
+      : ''
+  }
 
 # Undeploy application
 undeploy:
-	@echo "Undeploying application..."
-	@helm uninstall $(PROJECT_NAME) --namespace $(NAMESPACE) || echo "Release $(PROJECT_NAME) not found"
-	@echo "Cleaning up migration jobs and pods..."
-	@oc delete job -l app.kubernetes.io/component=migration -n $(NAMESPACE) 2>/dev/null || true
-	@oc delete pod -l app.kubernetes.io/component=migration -n $(NAMESPACE) 2>/dev/null || true
-	@echo "Cleanup complete"
+	@echo "🗑️  Undeploying application from $(NAMESPACE)..."
+	@echo ""
+	@echo "Step 1: Scaling down deployments managed by this Helm release..."
+	@oc scale deployment --replicas=0 -n $(NAMESPACE) -l app.kubernetes.io/instance=$(PROJECT_NAME) 2>/dev/null || kubectl scale deployment --replicas=0 -n $(NAMESPACE) -l app.kubernetes.io/instance=$(PROJECT_NAME) 2>/dev/null || echo "No deployments found for this release"
+	@echo ""
+	@echo "Step 2: Uninstalling Helm release..."
+	@helm uninstall $(PROJECT_NAME) --namespace $(NAMESPACE) 2>/dev/null && echo "✅ Helm release uninstalled" || echo "⚠️  Helm release not found or already removed"
+	@echo ""
+	@echo "Step 3: Cleaning up remaining resources managed by this release..."
+	@oc delete job -l app.kubernetes.io/instance=$(PROJECT_NAME) -n $(NAMESPACE) 2>/dev/null || kubectl delete job -l app.kubernetes.io/instance=$(PROJECT_NAME) -n $(NAMESPACE) 2>/dev/null || true
+	@oc delete pod -l app.kubernetes.io/instance=$(PROJECT_NAME) -n $(NAMESPACE) 2>/dev/null || kubectl delete pod -l app.kubernetes.io/instance=$(PROJECT_NAME) -n $(NAMESPACE) 2>/dev/null || true
+	@echo ""
+	@echo "✅ Undeployment complete!"
 
 # Lint Helm chart
 helm-lint: helm-dep-update
@@ -424,7 +520,9 @@ helm-template: helm-dep-update
     'containers-logs',
     ...(hasContainerizedPackages ? ['build-images', 'push-images'] : []),
     'create-project',
+    'check-helm-release',
     'helm-dep-update',
+    'watch-status',
     'deploy',
     'deploy-dev',
     'undeploy',

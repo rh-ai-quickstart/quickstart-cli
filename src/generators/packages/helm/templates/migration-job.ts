@@ -7,7 +7,7 @@ export function generateMigrationJob(params: HelmTemplateParams): string {
   const { config } = params;
   const chartName = config.name;
   
-  return `{{- if and .Values.migration.enabled .Values.database.enabled }}
+  return `{{- if and .Values.migration.enabled .Values.pgvector.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -39,7 +39,7 @@ spec:
             - -c
             - |
               echo "Waiting for database to be ready..."
-              until pg_isready -h {{ .Values.database.name }} -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
+              until pg_isready -h {{ .Values.pgvector.secret.host }} -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
                 echo "Database not ready, waiting..."
                 sleep 5
               done
@@ -69,7 +69,7 @@ spec:
           env:
             # Database connection environment variables
             - name: POSTGRES_HOST
-              value: {{ .Values.database.name | quote }}
+              value: {{ .Values.pgvector.secret.host | quote }}
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:

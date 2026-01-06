@@ -4,6 +4,7 @@ export interface ConfigTemplateParams {
     features: ProjectConfig['features'];
 }
 export * from './package-json.js';
+export * from './readme.js';
 export * from './storybook.js';
 export * from './styles.js';
 export * from './tsconfig.js';

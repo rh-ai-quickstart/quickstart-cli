@@ -38,7 +38,7 @@ spec:
               containerPort: 8000
               protocol: TCP
           env:
-            {{- if .Values.database.enabled }}
+            {{- if .Values.pgvector.enabled }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

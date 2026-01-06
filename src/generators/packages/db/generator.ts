@@ -24,6 +24,7 @@ import {
   MigrationTemplateParams,
 } from './templates/migrations/index.js';
 import { generateDatabaseTests, TestTemplateParams } from './templates/tests/index.js';
+import { generateContainerfile } from './templates/containerfile.js';
 
 export class DBPackageGenerator {
   private packageDir: string;
@@ -72,6 +73,7 @@ export class DBPackageGenerator {
       'package.json': generatePackageJson(this.templateParams),
       'pyproject.toml': generatePyprojectToml(this.templateParams),
       'alembic.ini': generateAlembicConfig(this.templateParams),
+      'Containerfile': generateContainerfile(this.templateParams),
     };
 
     for (const [filename, content] of Object.entries(files)) {

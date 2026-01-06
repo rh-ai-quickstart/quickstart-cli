@@ -11,3 +11,6 @@ export * from './releaserc.js';
 export * from './commitlint.js';
 export * from './husky.js';
 export * from './pull-request-template.js';
+export * from './compose.js';
+export * from './makefile.js';
+export * from './env-example.js';

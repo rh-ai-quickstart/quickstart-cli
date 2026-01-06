@@ -20,5 +20,4 @@ export declare class UIPackageGenerator {
     private generateSchemas;
     private generateServices;
     private generateHooks;
-    private generateReadme;
 }
