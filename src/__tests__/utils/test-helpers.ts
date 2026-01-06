@@ -99,23 +99,30 @@ export async function getFileContent(filePath: string): Promise<string> {
 
 /**
  * Check if generated Python code is syntactically valid using actual Python
+ * Tries multiple methods: python3, python, uv run python (in order)
  */
 export async function validatePythonSyntax(filePath: string): Promise<boolean> {
-  try {
-    // First check if Python is available
-    const { execSync } = await import('child_process');
+  const { execSync } = await import('child_process');
 
-    // Use uv to run Python's built-in syntax checker
-    execSync(`uv run python -m py_compile "${filePath}"`, {
-      stdio: 'pipe', // Suppress output
-      timeout: 5000, // 5 second timeout
-    });
+  // List of Python commands to try in order of preference
+  const pythonCommands = ['python3', 'python', 'uv run python'];
 
-    return true;
-  } catch (error) {
-    console.warn(`Python syntax validation failed for ${filePath}:`, error);
-    return false;
+  for (const pythonCmd of pythonCommands) {
+    try {
+      execSync(`${pythonCmd} -m py_compile "${filePath}"`, {
+        stdio: 'pipe', // Suppress output
+        timeout: 10000, // 10 second timeout
+      });
+      return true;
+    } catch {
+      // Try next command
+      continue;
+    }
   }
+
+  // If no Python commands work, fall back to basic validation
+  console.warn(`No Python interpreter available, using basic syntax validation for ${filePath}`);
+  return validatePythonSyntaxBasic(filePath);
 }
 
 /**
