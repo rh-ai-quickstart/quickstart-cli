@@ -28,8 +28,10 @@ export const generateRootPackageJson = (params: ConfigTemplateParams): string =>
       ...(enabledFeatures.includes('db') && {
         'db:start': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'db:start', true),
         'db:stop': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'db:stop', true),
-        'db:upgrade': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'upgrade', true),
-        'db:revision': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'revision', true),
+        'db:migrate': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'migrate', true),
+        'db:migrate:new': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'migrate:new', true),
+        'db:migrate:down': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'migrate:down', true),
+        'db:migrate:history': runWorkspaceScript(config.packageManager, `@${config.name}/db`, 'migrate:history', true),
         'compose:up': 'podman-compose up -d',
         'compose:down': 'podman-compose down',
         'compose:logs': 'podman-compose logs -f',

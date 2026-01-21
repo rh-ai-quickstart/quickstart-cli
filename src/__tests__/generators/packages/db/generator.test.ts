@@ -80,12 +80,12 @@ describe('DBPackageGenerator', () => {
         'db:start': `podman-compose -f ../../compose.yml up -d ${serviceName}`,
         'db:stop': `podman-compose -f ../../compose.yml down ${serviceName}`,
         'db:logs': `podman-compose -f ../../compose.yml logs -f ${serviceName}`,
-        upgrade: 'alembic upgrade head',
-        downgrade: 'alembic downgrade -1',
-        revision: 'alembic revision --autogenerate',
-        history: 'alembic history',
-        current: 'alembic current',
-        'install:deps': 'python -m pip install -e ".[dev]"',
+        migrate: 'uv run alembic upgrade head',
+        'migrate:down': 'uv run alembic downgrade -1',
+        'migrate:new': 'uv run alembic revision --autogenerate',
+        'migrate:history': 'uv run alembic history',
+        'migrate:current': 'uv run alembic current',
+        'install:deps': 'uv sync',
       });
     });
 

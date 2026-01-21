@@ -49,7 +49,7 @@ export const generateMakefile = (params: ConfigTemplateParams): string => {
 ${hasDb ? `	@echo "  db-start            Start the database container"
 	@echo "  db-stop             Stop the database container"
 	@echo "  db-logs             View database container logs"
-	@echo "  db-upgrade          Run database migrations"` : ''}
+	@echo "  db-migrate          Run database migrations"` : ''}
 	@echo "  containers-build   Build all container images"
 	@echo "  containers-up      Start all containers"
 	@echo "  containers-down    Stop all containers"
@@ -107,8 +107,8 @@ ${hasDb ? `	@echo "  db-start            Start the database container"
     targets.push(`db-logs:
 	podman-compose logs -f ${dbServiceName}`);
 
-    targets.push(`db-upgrade:
-	${runWorkspaceScript(pkgManager, `@${config.name}/db`, 'upgrade', true)}`);
+    targets.push(`db-migrate:
+	${runWorkspaceScript(pkgManager, `@${config.name}/db`, 'migrate', true)}`);
   }
 
   // Container targets
@@ -513,7 +513,7 @@ helm-template: helm-dep-update
     'build',
     'test',
     'lint',
-    ...(hasDb ? ['db-start', 'db-stop', 'db-logs', 'db-upgrade'] : []),
+    ...(hasDb ? ['db-start', 'db-stop', 'db-logs', 'db-migrate'] : []),
     'containers-build',
     'containers-up',
     'containers-down',

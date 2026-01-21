@@ -3,10 +3,177 @@ import {
   CheckCircle2,
   CircleHelp,
   AlertTriangle,
+  Folder,
 } from "lucide-react";
 import type { Service } from "../../schemas/health";
 import { getUptime, formatTime } from "../../lib/utils";
 import { useState, useEffect } from "react";
+
+// Package info for each service
+const PACKAGE_INFO: Record<string, {
+  path: string;
+  devUrl: string;
+  quickActions: { label: string; url: string; external?: boolean }[];
+  commands: { label: string; cmd: string }[];
+  gettingStarted: string[];
+}> = {
+  UI: {
+    path: "packages/ui/",
+    devUrl: "http://localhost:3000",
+    quickActions: [
+      { label: "Storybook", url: "http://localhost:6006", external: true },
+    ],
+    commands: [
+      { label: "Dev", cmd: "pnpm dev" },
+      { label: "Build", cmd: "pnpm build" },
+      { label: "Test", cmd: "pnpm test" },
+      { label: "Lint", cmd: "pnpm lint" },
+      { label: "Format", cmd: "pnpm format" },
+      { label: "Type Check", cmd: "pnpm type-check" },
+    ],
+    gettingStarted: [
+      "Create route in \\\`src/routes/\\\`",
+      "Add components in \\\`src/components/\\\`",
+      "Add API calls in \\\`src/services/\\\`",
+      "Create hooks in \\\`src/hooks/\\\` to use services",
+    ],
+  },
+  API: {
+    path: "packages/api/",
+    devUrl: "http://localhost:8000",
+    quickActions: [
+      { label: "API Docs", url: "http://localhost:8000/docs", external: true },
+      { label: "DB Admin", url: "http://localhost:8000/admin", external: true },
+    ],
+    commands: [
+      { label: "Dev", cmd: "pnpm dev" },
+      { label: "Start", cmd: "pnpm start" },
+      { label: "Test", cmd: "pnpm test" },
+      { label: "Lint", cmd: "pnpm lint" },
+      { label: "Format", cmd: "pnpm format" },
+      { label: "Type Check", cmd: "pnpm type-check" },
+    ],
+    gettingStarted: [
+      "Create schema in \\\`src/schemas/\\\`",
+      "Add route in \\\`src/routes/\\\`",
+      "Register router in \\\`main.py\\\`",
+    ],
+  },
+  Database: {
+    path: "packages/db/",
+    devUrl: "postgresql://localhost:5432",
+    quickActions: [],
+    commands: [
+      { label: "Start DB", cmd: "pnpm db:start" },
+      { label: "Stop DB", cmd: "pnpm db:stop" },
+      { label: "Logs", cmd: "pnpm db:logs" },
+      { label: "Migrate", cmd: "pnpm migrate" },
+      { label: "New Migration", cmd: "pnpm migrate:new" },
+      { label: "History", cmd: "pnpm migrate:history" },
+    ],
+    gettingStarted: [
+      "See example model in \\\`src/db/models.py\\\`",
+      "Add/modify models, then run \\\`pnpm migrate:new\\\`",
+      "Apply migration with \\\`pnpm migrate\\\`",
+    ],
+  },
+};
+
+// Parse backtick-wrapped text into styled code segments
+function formatWithCode(text: string) {
+  const parts = text.split(/(\\\`[^\\\`]+\\\`)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith('\\\`') && part.endsWith('\\\`')) {
+      return (
+        <code key={idx} className="rounded bg-muted px-1 py-0.5 font-mono text-foreground">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return <span key={idx}>{part}</span>;
+  });
+}
+
+function DevInfo({ serviceName }: { serviceName: string }) {
+  const info = PACKAGE_INFO[serviceName];
+  const [showSteps, setShowSteps] = useState(false);
+
+  if (!info) return null;
+
+  return (
+    <div className="mt-3 space-y-3">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        {info.quickActions.map((action, idx) => (
+          <a
+            key={idx}
+            href={action.url}
+            target={action.external ? "_blank" : undefined}
+            rel={action.external ? "noopener noreferrer" : undefined}
+            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+          >
+            {action.label}
+            {action.external && <span className="text-[10px]">↗</span>}
+          </a>
+        ))}
+      </div>
+
+      {/* Commands */}
+      <div className="flex flex-wrap gap-1.5">
+        {info.commands.map((cmd, idx) => (
+          <div
+            key={idx}
+            className="inline-flex items-center gap-1.5 rounded bg-muted px-2 py-1 font-mono text-[11px]"
+          >
+            <span className="text-muted-foreground">{cmd.label}:</span>
+            <code className="text-foreground">{cmd.cmd}</code>
+          </div>
+        ))}
+      </div>
+
+      {/* Getting Started */}
+      <div>
+        <button
+          onClick={() => setShowSteps(!showSteps)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>{showSteps ? "▼" : "▶"}</span>
+          <span>Getting Started</span>
+        </button>
+        {showSteps && (
+          <ol className="mt-2 ml-4 space-y-1 text-xs text-muted-foreground list-decimal list-outside">
+            {info.gettingStarted.map((step, idx) => (
+              <li key={idx} className="pl-1">{formatWithCode(step)}</li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+      {/* Package Path & Dev URL */}
+      <div className="flex flex-col gap-1 text-[11px] font-mono pt-2 border-t border-border">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Folder className="h-3 w-3 text-amber-500" />
+          <span>{info.path}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-muted-foreground">Dev:</span>
+          {info.devUrl.startsWith("http") ? (
+            <a
+              href={info.devUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sky-500 hover:underline"
+            >
+              {info.devUrl}
+            </a>
+          ) : (
+            <span className="text-foreground">{info.devUrl}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const STATUS_META: Record<
   Service["status"],
@@ -42,12 +209,12 @@ const STATUS_META: Record<
   },
 };
 
-export function ServiceCard({ 
-  service, 
-  isLoading, 
-  error 
-}: { 
-  service: Service; 
+export function ServiceCard({
+  service,
+  isLoading,
+  error
+}: {
+  service: Service;
   isLoading: boolean;
   error?: Error | null;
 }) {
@@ -80,9 +247,6 @@ export function ServiceCard({
               <span className="text-sm font-medium text-foreground">
                 {service.name}
               </span>
-              <span className="rounded-md text-sm bg-muted px-1.5 py-0.5">
-                v{service.version}
-              </span>
               {isLoading ? (
                 <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
                   <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"></div>
@@ -113,6 +277,7 @@ export function ServiceCard({
           </div>
         </div>
       </div>
+      <DevInfo serviceName={service.name} />
     </div>
   );
 }`;

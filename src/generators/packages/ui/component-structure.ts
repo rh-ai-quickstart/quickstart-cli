@@ -17,8 +17,6 @@ import {
   generateLogoStory,
   generateModeToggle,
   generateModeToggleStory,
-  generateQuickStatsComponent,
-  generateQuickStatsStory,
   generateSeparatorComponent,
   generateSeparatorStory,
   generateServiceCardComponent,
@@ -44,6 +42,7 @@ export const baseDirectories = [
   'src/services',
   'src/hooks',
   'src/styles',
+  'src/test',
   'public',
   '.storybook',
 ];
@@ -112,12 +111,6 @@ export const components: ComponentDefinition[] = [
     generator: generateHeroComponent,
     passParams: true,
     story: { generator: generateHeroStory },
-  },
-  {
-    dir: 'quick-stats',
-    file: 'quick-stats',
-    generator: generateQuickStatsComponent,
-    story: { generator: generateQuickStatsStory },
   },
   {
     dir: 'stat-card',
