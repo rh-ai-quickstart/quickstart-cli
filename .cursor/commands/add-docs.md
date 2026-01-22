@@ -1,0 +1,1 @@
+Can you please add JS Docs to all functions and classes. Please be sure to add comments for code that may not be clear for the reader at glance. 
