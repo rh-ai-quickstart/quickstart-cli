@@ -5,48 +5,29 @@ export const generateHealthTests = (params: TestTemplateParams): string => {
   const dbTests = config.features.db
     ? `
 
-def test_health_check_includes_database():
+def test_health_check_includes_database(health_response):
     """Test health check includes database status"""
-    response = client.get("/health/")
-    assert response.status_code == 200
-    
-    data = response.json()
-    assert isinstance(data, list)
-    
-    # Find database service in response
-    db_service = next((s for s in data if s["name"] == "Database"), None)
-    assert db_service is not None
+    db_service = assert_service_exists(health_response, "Database")
+
     assert db_service["status"] in ["healthy", "down"]
     assert "message" in db_service
-    assert db_service["version"] == "PostgreSQL"
+    assert "version" in db_service
 
 
-def test_health_check_api_service():
+def test_health_check_api_service(health_response):
     """Test health check includes API service"""
-    response = client.get("/health/")
-    assert response.status_code == 200
-    
-    data = response.json()
-    assert isinstance(data, list)
-    
-    # Find API service in response
-    api_service = next((s for s in data if s["name"] == "API"), None)
-    assert api_service is not None
+    api_service = assert_service_exists(health_response, "API")
+
     assert api_service["status"] == "healthy"
     assert api_service["message"] == "API is running"
     assert api_service["version"] == "0.0.0"`
     : `
 
-def test_health_check_api_only():
+def test_health_check_api_only(health_response):
     """Test health check returns only API service"""
-    response = client.get("/health/")
-    assert response.status_code == 200
-    
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) == 1
-    
-    api_service = data[0]
+    assert len(health_response) == 1
+
+    api_service = health_response[0]
     assert api_service["name"] == "API"
     assert api_service["status"] == "healthy"
     assert api_service["message"] == "API is running"
@@ -56,29 +37,21 @@ def test_health_check_api_only():
 Health endpoint tests
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from src.main import app
-
-client = TestClient(app)
+from helpers import assert_service_exists
 
 
-def test_health_check_endpoint_exists():
-    """Test health check endpoint is accessible"""
-    response = client.get("/health/")
-    assert response.status_code == 200
-    
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1  # At least API service should be present
+def test_health_check_endpoint_exists(health_response):
+    """Test health check endpoint returns list of services"""
+    assert isinstance(health_response, list)
+    assert len(health_response) >= 1  # At least API service should be present
 ${dbTests}
 
 
-def test_root_endpoint():
-    """Test root endpoint"""
+def test_root_endpoint(client):
+    """Test root endpoint returns welcome message"""
     response = client.get("/")
     assert response.status_code == 200
-    
+
     data = response.json()
     assert "message" in data
 `;

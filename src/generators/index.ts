@@ -14,6 +14,7 @@ import { DBPackageGenerator } from './packages/db/generator.js';
 import { CorePackageGenerator } from './packages/core/generator.js';
 import { ConfigPackageGenerator } from './packages/config/generator.js';
 import { HelmPackageGenerator } from './packages/helm/generator.js';
+import { AgentRulesGenerator } from './packages/agents/generator.js';
 
 const execAsync = promisify(exec);
 
@@ -82,6 +83,17 @@ export class ProjectGenerator {
       };
       const configGenerator = new ConfigPackageGenerator(this.outputDir, this.config);
       await configGenerator.generate();
+
+      // Generate AI agent rules
+      currentStep++;
+      yield {
+        step: 'agents',
+        message: 'Generating AI agent configuration...',
+        currentStep,
+        totalSteps,
+      };
+      const agentRulesGenerator = new AgentRulesGenerator(this.config, this.outputDir);
+      await agentRulesGenerator.generate();
 
       // Generate UI package (if enabled)
       if (this.config.features.ui) {
@@ -153,7 +165,7 @@ export class ProjectGenerator {
   }
 
   private calculateTotalSteps(): number {
-    let steps = 5; // project dir + root config + config packages + helm + git
+    let steps = 6; // project dir + root config + config packages + agents + helm + git
     if (this.config.features.ui) steps++;
     if (this.config.features.api) steps++;
     if (this.config.features.db) steps++;

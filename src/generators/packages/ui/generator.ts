@@ -34,6 +34,12 @@ import { generateHealthHook } from './templates/hooks/health.js';
 import { generateHealthSchema } from './templates/schemas/health.js';
 import { generateIndexHtml, generateMainTsx } from './templates/main/index.js';
 import { generateContainerfile } from './templates/containerfile.js';
+import {
+  generateVitestConfig,
+  generateTestSetup,
+  generateTestUtils,
+  generateHeroTest,
+} from './templates/test/index.js';
 
 export class UIPackageGenerator {
   private packageDir: string;
@@ -58,6 +64,7 @@ export class UIPackageGenerator {
       this.generateRoutes(),
       this.generateStyles(),
       this.generateStorybook(),
+      this.generateTestFiles(),
     ];
 
     if (this.config.features.api) {
@@ -98,6 +105,7 @@ export class UIPackageGenerator {
       'eslint.config.mjs': generateESLintConfig(this.templateParams),
       '.prettierrc': generatePrettierRc(this.templateParams),
       'Containerfile': generateContainerfile(this.templateParams),
+      'vitest.config.ts': generateVitestConfig(),
     };
 
     for (const [filename, content] of Object.entries(files)) {
@@ -183,6 +191,17 @@ export class UIPackageGenerator {
     const hooksDir = path.join(this.packageDir, 'src', 'hooks');
 
     await fs.outputFile(path.join(hooksDir, 'health.ts'), generateHealthHook());
+  }
+
+  private async generateTestFiles(): Promise<void> {
+    const testDir = path.join(this.packageDir, 'src', 'test');
+    const heroDir = path.join(this.packageDir, 'src', 'components', 'hero');
+
+    await Promise.all([
+      fs.outputFile(path.join(testDir, 'setup.ts'), generateTestSetup()),
+      fs.outputFile(path.join(testDir, 'test-utils.tsx'), generateTestUtils()),
+      fs.outputFile(path.join(heroDir, 'hero.test.tsx'), generateHeroTest(this.templateParams)),
+    ]);
   }
 
 }

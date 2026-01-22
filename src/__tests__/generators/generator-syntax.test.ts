@@ -51,7 +51,6 @@ describe('Generator Syntax Validation', () => {
         'src/components/mode-toggle/mode-toggle.tsx',
         'src/components/logo/logo.tsx',
         'src/components/hero/hero.tsx',
-        'src/components/quick-stats/quick-stats.tsx',
         'src/components/stat-card/stat-card.tsx',
         'src/components/status-panel/status-panel.tsx',
         'src/components/service-card/service-card.tsx',
@@ -116,7 +115,6 @@ describe('Generator Syntax Validation', () => {
       // Validate imports exist
       const expectedImports = [
         "from '../components/hero/hero'",
-        "from '../components/quick-stats/quick-stats'",
         "from '../components/status-panel/status-panel'",
         "from '../components/footer/footer'",
         "from '../hooks/health'",

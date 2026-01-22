@@ -20,7 +20,7 @@ import {
 import { generateConfigFile } from './templates/config/config-file.js';
 import { generateHealthRoute } from './templates/routes/index.js';
 import { generateHealthSchema } from './templates/schemas/index.js';
-import { generateHealthTests, TestTemplateParams } from './templates/tests/index.js';
+import { generateHealthTests, generateConftest, generateTestHelpers, TestTemplateParams } from './templates/tests/index.js';
 import { generateContainerfile } from './templates/containerfile.js';
 
 export class APIPackageGenerator {
@@ -96,6 +96,8 @@ export class APIPackageGenerator {
   private async generateTests(): Promise<void> {
     const testFiles = {
       'tests/__init__.py': '',
+      'tests/conftest.py': generateConftest(),
+      'tests/helpers.py': generateTestHelpers(),
       'tests/test_health.py': generateHealthTests(this.templateParams),
     };
 

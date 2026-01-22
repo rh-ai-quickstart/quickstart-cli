@@ -1,11 +1,4 @@
-export const generateStatusPanelComponent = (): string => `import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../atoms/card/card";
-import { CircleHelp } from "lucide-react";
+export const generateStatusPanelComponent = (): string => `import { CircleHelp } from "lucide-react";
 import { ServiceList } from "../service-list/service-list";
 
 type Service = {
@@ -21,44 +14,32 @@ type Service = {
   error?: string;
 };
 
-export function StatusPanel({ services, isLoading }: { services: Service[]; isLoading: boolean }) {
-  const healthyCount = services.filter((s) => s.status === "healthy").length;
-
+export function StatusPanel({ services }: { services: Service[] }) {
   if (services.length === 0) {
     return (
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Service Health</CardTitle>
-          <CardDescription>
-            No services configured
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <CircleHelp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              Add packages like API or Database to see service health monitoring here.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">Services</h2>
+        <p className="text-sm text-muted-foreground">No services configured</p>
+        <div className="text-center py-8">
+          <CircleHelp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">
+            Add packages like API or Database to see services here.
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <CardTitle className="text-lg">Service Health</CardTitle>
-          <CardDescription>
-            {isLoading ? "Checking services..." : \`\${healthyCount} of \${services.length} services healthy\`}
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ServiceList />
-      </CardContent>
-    </Card>
+    <div>
+      <div className="mb-4">
+        <h2 className="text-2xl font-semibold tracking-tight">Services</h2>
+        <p className="text-sm text-muted-foreground">
+          Explore each package to get started
+        </p>
+      </div>
+      <ServiceList />
+    </div>
   );
 }`;
 

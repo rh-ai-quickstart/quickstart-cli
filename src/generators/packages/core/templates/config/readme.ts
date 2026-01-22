@@ -79,12 +79,12 @@ pnpm db:start
 
 3. **Run database migrations**:
 \`\`\`bash
-make db-upgrade
+make db-migrate
 \`\`\`
 
    Or using pnpm:
 \`\`\`bash
-pnpm db:upgrade
+pnpm db:migrate
 \`\`\`
 
 4. **Start development servers**:`
@@ -113,7 +113,7 @@ ${
     ? `make db-start         # Start database container
 make db-stop          # Stop database container
 make db-logs          # View database logs
-make db-upgrade       # Run database migrations
+make db-migrate       # Run database migrations
 make containers-build # Build all containers
 make containers-up    # Start all containers (production-like)
 make containers-down  # Stop all containers
@@ -135,9 +135,9 @@ ${
   hasDb
     ? `# Database
 pnpm db:start         # Start database containers
-pnpm db:stop          # Stop database containers  
-pnpm db:upgrade       # Run database migrations
-pnpm db:revision      # Create new migration
+pnpm db:stop          # Stop database containers
+pnpm db:migrate       # Run database migrations
+pnpm db:migrate:new   # Create new migration
 pnpm compose:up       # Start all containers
 pnpm compose:down     # Stop all containers
 pnpm containers:build # Build all containers
@@ -494,6 +494,93 @@ kubectl get events -n ${config.name} --sort-by='.lastTimestamp'
 - Ensure images are pushed to the registry
 
 For more details, see the [Helm chart documentation](deploy/helm/${config.name}/README.md) (if available) or the [Helm values file](deploy/helm/${config.name}/values.yaml).
+
+## Extending the Template
+
+This section covers how to customize and extend the template for your project.
+
+### Quick Reference
+
+| Task | Location | Documentation |
+|------|----------|---------------|
+${hasApi ? `| Add API endpoint | \`packages/api/src/routes/\` | [API README](packages/api/README.md) |\n` : ''}${hasUi ? `| Add UI page | \`packages/ui/src/routes/\` | [UI README](packages/ui/README.md) |
+| Add UI component | \`packages/ui/src/components/\` | [UI README](packages/ui/README.md) |\n` : ''}${hasDb ? `| Add database model | \`packages/db/src/db/\` | [DB README](packages/db/README.md) |
+| Create migration | Run \`pnpm db:migrate:new -m "message"\` | [DB README](packages/db/README.md) |\n` : ''}${hasUi && hasApi ? `| Add API integration | \`packages/ui/src/services/\` + \`hooks/\` | [UI README](packages/ui/README.md) |\n` : ''}
+
+${hasApi ? `### Adding a New API Endpoint
+
+1. **Create schema** in \`packages/api/src/schemas/your_resource.py\`
+2. **Create route** in \`packages/api/src/routes/your_resource.py\`
+3. **Register router** in \`packages/api/src/main.py\`
+4. **Add tests** in \`packages/api/tests/test_your_resource.py\`
+` : ''}
+${hasUi ? `### Adding a New UI Page
+
+TanStack Router uses file-based routing. Create a file in \`packages/ui/src/routes/\`:
+
+\`\`\`typescript
+// packages/ui/src/routes/about.tsx
+import { createFileRoute } from '@tanstack/react-router';
+
+export const Route = createFileRoute('/about')({
+  component: About,
+});
+
+function About() {
+  return <div>About page</div>;
+}
+\`\`\`
+
+The route tree regenerates automatically during development.
+` : ''}
+${hasDb ? `### Adding a Database Model
+
+1. **Define model** in \`packages/db/src/db/models.py\`
+2. **Generate migration**: \`pnpm db:migrate:new -m "add your_table"\`
+3. **Review migration** in \`packages/db/alembic/versions/\`
+4. **Apply migration**: \`pnpm db:migrate\`
+` : ''}
+${hasUi && hasApi ? `### Connecting UI to API
+
+This project uses a **hooks/services pattern** for API integration:
+
+1. **Create Zod schema** in \`packages/ui/src/schemas/\` for response validation
+2. **Create service** in \`packages/ui/src/services/\` for API calls
+3. **Create hook** in \`packages/ui/src/hooks/\` wrapping TanStack Query
+4. **Use hook in component** (never call services directly)
+
+\`\`\`
+Component → Hook → TanStack Query → Service → API
+\`\`\`
+` : ''}
+
+## Testing
+
+${hasUi ? `### UI Testing (Vitest)
+
+Tests are co-located with components:
+
+\`\`\`bash
+pnpm --filter ui test       # Run tests (watch mode)
+pnpm --filter ui test:run   # Run once
+\`\`\`
+
+Test files: \`packages/ui/src/**/*.test.tsx\`
+` : ''}
+${hasApi ? `### API Testing (Pytest)
+
+\`\`\`bash
+pnpm --filter api test      # Run all tests
+\`\`\`
+
+Test files: \`packages/api/tests/\`
+` : ''}
+### Running All Tests
+
+\`\`\`bash
+pnpm test                   # All packages
+make test                   # Via Makefile
+\`\`\`
 
 ## Learn More
 

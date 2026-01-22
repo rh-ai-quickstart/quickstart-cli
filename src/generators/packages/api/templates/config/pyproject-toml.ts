@@ -80,6 +80,11 @@ allow-direct-references = true`
 [tool.ruff]
 extend = "../../configs/ruff/pyproject.toml"
 
+[tool.pytest.ini_options]
+pythonpath = [".", "tests"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
 [tool.mypy]
 python_version = "${PYTHON_VERSIONS.python.replace(/^>=/, '')}"
 warn_return_any = true
